@@ -161,7 +161,6 @@ try {
                 modal.style.display = 'flex';
             }
 
-            // Somente o admin reinicia o jogo e distribui as pontuações guardadas
             if (gameState.jogadores && gameState.jogadores[0].id === playerId) {
                 setTimeout(async () => {
                     let deck = criarBaralhoCacheta();
@@ -174,7 +173,7 @@ try {
                             nome: j.nome,
                             mao: [],
                             gruposBaixados: [],
-                            pontos: (j.pontos || 0) + (ganhou ? 1 : 0) // Guarda e acumula os pontos
+                            pontos: (j.pontos || 0) + (ganhou ? 1 : 0)
                         };
                     });
 
@@ -268,13 +267,12 @@ try {
                 }
             }
 
-            // Renderiza os Oponentes com Avatar, Pontos e Cartas Viradas (Verso)
             const playersArea = document.getElementById('playersArea');
             if (playersArea) {
                 playersArea.innerHTML = '';
                 if (gameState.jogadores) {
                     gameState.jogadores.forEach(j => {
-                        if (j.id === playerId) return; // Não renderiza a si mesmo na área de oponentes
+                        if (j.id === playerId) return;
 
                         const box = document.createElement('div');
                         let isTurnoOponente = gameState.turno === j.id;
@@ -301,7 +299,6 @@ try {
                 }
             }
 
-            // Renderiza a mão do próprio jogador
             const eu = gameState.jogadores ? gameState.jogadores.find(j => j.id === playerId) : null;
             const handEl = document.getElementById('playerHand');
             if (handEl) {
@@ -361,7 +358,6 @@ try {
         `;
     }
 
-    // Configuração de Toque, Arraste e Desmarcar Grupos
     document.addEventListener("DOMContentLoaded", () => {
         const handContainer = document.getElementById("playerHand");
         if (!handContainer) return;
@@ -467,13 +463,13 @@ try {
                 cartaArrastando.style.opacity = "1";
 
                 if (gameState && playerId) {
-                    const eu = gameState.jogadores.find(j => j.id === playerId);
-                    if (eu && eu.mao) {
+                    let indexEu = gameState.jogadores.findIndex(j => j.id === playerId);
+                    if (indexEu > -1) {
                         const idsNaTela = Array.from(handContainer.querySelectorAll(".card"))
                             .map(c => c.dataset.idUnico)
                             .filter(id => id);
 
-                        eu.mao.sort((a, b) => {
+                        gameState.jogadores[indexEu].mao.sort((a, b) => {
                             return idsNaTela.indexOf(a.idUnico) - idsNaTela.indexOf(b.idUnico);
                         });
 
@@ -482,7 +478,7 @@ try {
 
                         try {
                             await updateDoc(roomRef, { jogadores: gameState.jogadores });
-                        } catch (err) { console.error(err); }
+                        } catch (err) { console.error("Erro ao salvar ordenação:", err); }
                     }
                 }
             }
@@ -506,28 +502,26 @@ try {
         const vira = deck.pop();
 
         let jogadoresAtuais = gameState.jogadores ? [...gameState.jogadores] : [];
-        if (jogadoresAtuais.length === 0) {
-            jogadoresAtuais.push({ id: playerId, nome: playerName, mao: [], gruposBaixados: [], pontos: 0 });
-        }
-
-        // Se estiver jogando sozinho, adiciona 1 robô de exemplo. Caso queira mais robôs, pode adicionar dinamicamente.
-        let temBot = jogadoresAtuais.some(j => j.id.startsWith('p_bot'));
         let jogadoresReais = jogadoresAtuais.filter(j => !j.id.startsWith('p_bot'));
 
-        if (jogadoresReais.length === 1 && !temBot && jogadoresAtuais.length < 4) {
-            jogadoresAtuais.push({
-                id: 'p_bot_1',
-                nome: 'Robô 🤖',
-                mao: [],
-                gruposBaixados: [],
-                pontos: 0
-            });
+        if (jogadoresReais.length === 1) {
+            let temBot = jogadoresAtuais.some(j => j.id.startsWith('p_bot'));
+            if (!temBot) {
+                jogadoresAtuais.push({
+                    id: 'p_bot_1',
+                    nome: 'Robô 🤖',
+                    mao: [],
+                    gruposBaixados: [],
+                    pontos: 0
+                });
+            }
+        } else {
+            jogadoresAtuais = jogadoresReais;
         }
 
         jogadoresAtuais.forEach(j => {
             j.gruposBaixados = [];
             j.mao = deck.splice(0, 9);
-            // Mantém os pontos existentes caso já tenham pontuado antes
             j.pontos = j.pontos || 0;
         });
 

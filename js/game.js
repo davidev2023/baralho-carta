@@ -11,10 +11,6 @@ if (!roomId || !playerId) {
 
 document.getElementById('roomDisplay').innerText = `Mesa: ${roomId}`;
 
-document.getElementById('leaveBtn').addEventListener('click', () => {
-    window.location.href = 'index.html';
-});
-
 let selectedCardIndex = null;
 let estadoJogoCache = null;
 
@@ -23,8 +19,26 @@ const roomRef = doc(db, "mesas", roomId);
 onSnapshot(roomRef, (docSnap) => {
     if (docSnap.exists()) {
         estadoJogoCache = docSnap.data();
+        
+        if (estadoJogoCache.status === 'jogando' && estadoJogoCache.jogadores.length < 2) {
+            alert("Um jogador saiu da partida. O jogo foi encerrado!");
+            window.location.href = 'index.html';
+            return;
+        }
+
         atualizarInterface(estadoJogoCache);
     }
+});
+
+document.getElementById('leaveBtn').addEventListener('click', async () => {
+    if (estadoJogoCache && estadoJogoCache.jogadores) {
+        let novosJogadores = estadoJogoCache.jogadores.filter(j => j.id !== playerId);
+        await updateDoc(roomRef, {
+            jogadores: novosJogadores,
+            status: novosJogadores.length < 2 ? 'fim' : estadoJogoCache.status
+        });
+    }
+    window.location.href = 'index.html';
 });
 
 function criarElementoCarta(textoCarta) {
@@ -48,14 +62,13 @@ function criarElementoCarta(textoCarta) {
     return cardEl;
 }
 
-// Descobre qual carta é o coringa com base na carta vira
 function obterCoringa(cartaVira) {
     if (!cartaVira) return "-";
     const valores = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     let valorVira = cartaVira.slice(0, -1);
     let index = valores.indexOf(valorVira);
     let indexProximo = (index + 1) % valores.length;
-    return valores[indexProximo]; // Ex: se vira é 5, coringa é 6
+    return valores[indexProximo];
 }
 
 function atualizarInterface(data) {
@@ -72,7 +85,6 @@ function atualizarInterface(data) {
     const statusTurno = document.getElementById('statusTurno');
     const meuTurno = data.turno === playerId;
 
-    // Atualizar visual do Coringa na mesa
     const coringaPile = document.getElementById('coringaPile');
     coringaPile.innerHTML = '<div style="font-size:0.75rem; margin-bottom:2px;">Vira</div>';
     if (data.vira) {
@@ -85,9 +97,9 @@ function atualizarInterface(data) {
     if (data.status === 'aguardando') {
         statusTurno.innerText = "Aguardando o criador iniciar a partida...";
     } else if (data.status === 'fim') {
-        statusTurno.innerText = `🏆 Fim de jogo! ${data.vencedorNome} venceu!`;
+        statusTurno.innerText = `🏆 Fim de jogo! ${data.vencedorNome || 'Partida encerrada'} venceu!`;
     } else if (meuTurno) {
-        statusTurno.innerText = (data.faseTurno === 'comprar') ? "Sua vez! Compre do monte ou da lixeira." : "Sua vez! Organize, descarte ou bata.";
+        statusTurno.innerText = (data.faseTurno === 'comprar') ? "Sua vez! Compre do monte ou da lixeira." : "Sua vez! Arraste para encaixar, selecione para descartar ou bata.";
     } else {
         statusTurno.innerText = "Turno de outro jogador...";
     }
@@ -118,34 +130,148 @@ function atualizarInterface(data) {
         });
     }
 
-    // Mão do Jogador (Com suporte a toque para reorganizar e selecionar)
+    // Mão do Jogador com Animação Lenta e Realista ao Soltar
     const meuObjeto = data.jogadores.find(p => p.id === playerId);
     if (meuObjeto && meuObjeto.mao) {
         const handDiv = document.getElementById('playerHand');
         handDiv.innerHTML = '';
+        
+        if (!meuObjeto.marcadas) meuObjeto.marcadas = [];
+
         meuObjeto.mao.forEach((carta, index) => {
             const cardEl = criarElementoCarta(carta);
+            
+            if (meuObjeto.marcadas.includes(index)) {
+                cardEl.classList.add('grupo-salvo');
+            }
+
             if (index === selectedCardIndex) {
                 cardEl.classList.add('selected');
             }
 
-            // Sistema de toque/clique para organizar ou selecionar
-            cardEl.onclick = () => {
-                if (selectedCardIndex === null) {
-                    selectedCardIndex = index; // Seleciona para descartar
-                } else if (selectedCardIndex === index) {
-                    selectedCardIndex = null; // Deseleciona
-                } else {
-                    // Se já tinha uma selecionada e clicou em outra, troca de lugar na mão (Organizar com o dedo!)
-                    let maoTemp = [...meuObjeto.mao];
-                    let cartaMovida = maoTemp.splice(selectedCardIndex, 1)[0];
-                    maoTemp.splice(index, 0, cartaMovida);
-                    meuObjeto.mao = maoTemp;
+            cardEl.onclick = (e) => {
+                e.stopPropagation();
+                if (selectedCardIndex === index) {
                     selectedCardIndex = null;
-                    salvarMaoReordenada(meuObjeto.mao);
+                } else {
+                    selectedCardIndex = index;
                 }
                 atualizarInterface(estadoJogoCache);
             };
+
+            let startX = 0;
+            let startY = 0;
+            let isDragging = false;
+            let ultimoTargetIndex = index;
+
+            cardEl.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                isDragging = false;
+                cardEl.style.zIndex = 1000;
+            }, { passive: true });
+
+            cardEl.addEventListener('touchmove', (e) => {
+                let currentX = e.touches[0].clientX;
+                let currentY = e.touches[0].clientY;
+                let diffX = currentX - startX;
+                let diffY = currentY - startY;
+                
+                if (Math.abs(diffX) > 6 || Math.abs(diffY) > 6) {
+                    isDragging = true;
+                    cardEl.style.transform = `translate(${diffX}px, ${diffY}px) scale(1.12)`;
+                    cardEl.style.boxShadow = '0 20px 35px rgba(0,0,0,0.6)';
+                    cardEl.style.transition = 'none';
+
+                    let allCards = Array.from(handDiv.children);
+                    let targetIndex = -1;
+                    let menorDistancia = Infinity;
+
+                    allCards.forEach((cEl, idx) => {
+                        if (idx === index) return;
+                        let rect = cEl.getBoundingClientRect();
+                        let centroX = rect.left + rect.width / 2;
+                        let centroY = rect.top + rect.height / 2;
+                        let distancia = Math.hypot(currentX - centroX, currentY - centroY);
+
+                        if (distancia < menorDistancia) {
+                            menorDistancia = distancia;
+                            targetIndex = idx;
+                        }
+                    });
+
+                    if (targetIndex !== -1) {
+                        ultimoTargetIndex = targetIndex;
+                    }
+
+                    allCards.forEach((cEl, idx) => {
+                        if (idx === index) return;
+                        // Transição mais suave e orgânica ao abrir espaço
+                        cEl.style.transition = 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)';
+                        if (targetIndex !== -1) {
+                            if (index < targetIndex && idx > index && idx <= targetIndex) {
+                                cEl.style.transform = index < targetIndex ? 'translateX(-35px)' : 'translateX(35px)';
+                            } else if (index > targetIndex && idx >= targetIndex && idx < index) {
+                                cEl.style.transform = 'translateX(35px)';
+                            } else {
+                                cEl.style.transform = 'translate(0, 0)';
+                            }
+                        }
+                    });
+                }
+            }, { passive: true });
+
+            cardEl.addEventListener('touchend', async () => {
+                Array.from(handDiv.children).forEach(cEl => {
+                    cEl.style.transform = '';
+                    cEl.style.transition = '';
+                });
+
+                if (isDragging) {
+                    let targetIndex = ultimoTargetIndex;
+
+                    if (targetIndex > -1 && targetIndex !== index) {
+                        // Animação desacelerada e fluida imitando a realidade (dura 0.55 segundos)
+                        cardEl.style.transition = 'transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.55s ease';
+                        cardEl.style.transform = 'translate(0, 0) scale(1.02)';
+                        cardEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
+
+                        // Aguarda a animação lenta terminar antes de atualizar os dados no Firebase
+                        await new Promise(resolve => setTimeout(resolve, 520));
+
+                        let maoTemp = [...meuObjeto.mao];
+                        let cartaMovida = maoTemp.splice(index, 1)[0];
+                        
+                        if (index < targetIndex) {
+                            targetIndex--; 
+                        }
+                        
+                        maoTemp.splice(targetIndex, 0, cartaMovida);
+
+                        let marcadasTemp = [];
+                        meuObjeto.marcadas.forEach(mi => {
+                            if (mi === index) {
+                                marcadasTemp.push(targetIndex);
+                            } else {
+                                let novoMi = mi;
+                                if (mi > index) novoMi--;
+                                if (novoMi >= targetIndex) novoMi++;
+                                marcadasTemp.push(novoMi);
+                            }
+                        });
+
+                        meuObjeto.mao = maoTemp;
+                        meuObjeto.marcadas = [...new Set(marcadasTemp)];
+                        selectedCardIndex = null;
+
+                        await salvarMaoEOrdenacao(meuObjeto.mao, meuObjeto.marcadas);
+                    } else {
+                        cardEl.style.zIndex = 1;
+                        cardEl.style.transform = '';
+                        cardEl.style.boxShadow = '';
+                    }
+                }
+            });
 
             handDiv.appendChild(cardEl);
         });
@@ -156,8 +282,12 @@ function atualizarInterface(data) {
     const btnLixeira = document.getElementById('btnComprarLixeira');
     const btnDescartar = document.getElementById('btnDescartar');
     const btnBater = document.getElementById('btnBater');
+    const btnMarcar = document.getElementById('btnMarcarGrupo');
 
     if (data.status === 'jogando' && meuTurno) {
+        btnMarcar.style.display = 'inline-block';
+        btnMarcar.removeAttribute('disabled');
+
         if (data.faseTurno === 'comprar') {
             btnMonte.removeAttribute('disabled');
             btnLixeira.removeAttribute('disabled');
@@ -171,7 +301,6 @@ function atualizarInterface(data) {
             } else {
                 btnDescartar.setAttribute('disabled', 'true');
             }
-            // Botão Bater aparece na fase de descarte se tiver 10 cartas na mão
             if (meuObjeto.mao.length === 10) {
                 btnBater.style.display = 'block';
                 btnBater.removeAttribute('disabled');
@@ -184,17 +313,35 @@ function atualizarInterface(data) {
         btnLixeira.setAttribute('disabled', 'true');
         btnDescartar.setAttribute('disabled', 'true');
         btnBater.style.display = 'none';
+        btnMarcar.style.display = 'none';
     }
 }
 
-async function salvarMaoReordenada(novaMao) {
+async function salvarMaoEOrdenacao(novaMao, novasMarcadas) {
     let jogadores = [...estadoJogoCache.jogadores];
     let jIndex = jogadores.findIndex(j => j.id === playerId);
-    jogadores[jIndex].mao = novaMao;
+    jogadores[jIndex] = { ...jogadores[jIndex], mao: novaMao, marcadas: novasMarcadas };
     await updateDoc(roomRef, { jogadores });
 }
 
-// Iniciar / Reiniciar
+document.getElementById('btnMarcarGrupo')?.addEventListener('click', async () => {
+    if (selectedCardIndex === null || !estadoJogoCache) return;
+
+    let jogadores = [...estadoJogoCache.jogadores];
+    let jogadorAtual = jogadores.find(j => j.id === playerId);
+    if (!jogadorAtual.marcadas) jogadorAtual.marcadas = [];
+
+    const pos = jogadorAtual.marcadas.indexOf(selectedCardIndex);
+    if (pos > -1) {
+        jogadorAtual.marcadas.splice(pos, 1);
+    } else {
+        jogadorAtual.marcadas.push(selectedCardIndex);
+    }
+
+    selectedCardIndex = null;
+    await updateDoc(roomRef, { jogadores });
+});
+
 document.getElementById('btnIniciarPartida')?.addEventListener('click', async () => {
     const naipes = ['♠', '♥', '♦', '♣'];
     const valores = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
@@ -214,7 +361,8 @@ document.getElementById('btnIniciarPartida')?.addEventListener('click', async ()
     let jogadores = data.jogadores;
 
     jogadores.forEach(j => {
-        j.mao = baralho.splice(0, 9); // Começam com 9
+        j.mao = baralho.splice(0, 9);
+        j.marcadas = [];
     });
 
     const cartaVira = baralho.pop();
@@ -227,7 +375,6 @@ document.getElementById('btnIniciarPartida')?.addEventListener('click', async ()
         turno: jogadores[0].id,
         monte: baralho,
         lixeira: lixeiraInicial,
-        vira: cartaVira,
         jogadores: jogadores,
         vencedorNome: null
     });
@@ -257,7 +404,6 @@ document.getElementById('btnComprarLixeira').addEventListener('click', async () 
     await updateDoc(roomRef, { lixeira, jogadores, faseTurno: 'descartar' });
 });
 
-// Descartar normal (passa a vez)
 document.getElementById('btnDescartar').addEventListener('click', async () => {
     if (!estadoJogoCache || estadoJogoCache.turno !== playerId || estadoJogoCache.faseTurno !== 'descartar' || selectedCardIndex === null) return;
 
@@ -270,8 +416,14 @@ document.getElementById('btnDescartar').addEventListener('click', async () => {
     }
 
     const cartaDescartada = jogadorAtual.mao.splice(selectedCardIndex, 1)[0];
-    selectedCardIndex = null;
+    
+    if (jogadorAtual.marcadas) {
+        jogadorAtual.marcadas = jogadorAtual.marcadas
+            .filter(idx => idx !== selectedCardIndex)
+            .map(idx => idx > selectedCardIndex ? idx - 1 : idx);
+    }
 
+    selectedCardIndex = null;
     let lixeira = [...estadoJogoCache.lixeira];
     lixeira.push(cartaDescartada);
 
@@ -286,14 +438,12 @@ document.getElementById('btnDescartar').addEventListener('click', async () => {
     });
 });
 
-// Bater / Fechar o Jogo
 document.getElementById('btnBater').addEventListener('click', async () => {
     if (!estadoJogoCache || estadoJogoCache.turno !== playerId || selectedCardIndex === null) return;
 
     let jogadores = [...estadoJogoCache.jogadores];
     let jogadorAtual = jogadores.find(j => j.id === playerId);
 
-    // O jogador descarta a última carta para fechar as combinações válidas
     const cartaDescartada = jogadorAtual.mao.splice(selectedCardIndex, 1)[0];
     selectedCardIndex = null;
 

@@ -2,29 +2,29 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cacheta PWA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cacheta Online - Início</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1b4d3e">
 </head>
 <body>
-    <div class="lobby-container">
-        <h1>🃏 Cacheta Online</h1>
-        <p>Jogue cacheta em tempo real com seus amigos!</p>
-        
-        <div class="card-box">
-            <input type="text" id="playerName" placeholder="Digite seu Apelido" maxlength="15">
-            <button id="createRoomBtn" class="btn primary">Criar Nova Mesa</button>
+    <div class="game-container" style="justify-content: center; align-items: center;">
+        <div style="text-align: center; background: rgba(0,0,0,0.6); padding: 30px; border-radius: 14px; max-width: 400px; width: 90%; box-shadow: 0 10px 20px rgba(0,0,0,0.4);">
+            <h1 style="margin-top: 0; color: #f1c40f; font-size: 2rem;">🃏 Cacheta Online</h1>
+            <p style="font-size: 0.95rem; margin-bottom: 25px; color: #eee;">Entre ou crie uma mesa para jogar com seus amigos ou contra o robô!</p>
             
-            <div class="join-section">
-                <input type="text" id="roomCode" placeholder="Código da Mesa (Ex: A1B2)">
-                <button id="joinRoomBtn" class="btn secondary">Entrar na Mesa</button>
+            <div id="menuContent" style="display: flex; flex-direction: column; gap: 14px;">
+                <input type="text" id="playerName" placeholder="Seu Apelido" style="padding: 14px; border-radius: 6px; border: none; font-size: 1rem; text-align: center; outline: none;">
+                
+                <button id="createRoomBtn" class="btn-primary" style="padding: 14px; font-size: 1rem; background: #3498db; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Criar Nova Mesa</button>
+                
+                <hr style="width: 100%; border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 10px 0;">
+                
+                <input type="text" id="roomCode" placeholder="Código da Mesa" style="padding: 14px; border-radius: 6px; border: none; font-size: 1rem; text-align: center; outline: none;">
+                
+                <button id="joinRoomBtn" class="btn-action" style="padding: 14px; font-size: 1rem; background: #27ae60; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Entrar na Mesa</button>
             </div>
         </div>
     </div>
-
-    <!-- Firebase SDK (Modular) -->
     <script type="module" src="js/app.js"></script>
 </body>
 </html>

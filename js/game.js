@@ -25,14 +25,13 @@ try {
     const naipesCores = { 'copas': 'red', 'ouros': 'red', 'espadas': 'black', 'paus': 'black' };
     const ordemValores = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-    // Função para tocar um alerta sonoro quando for seu turno
     function tocarAlertaTurno() {
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Nota D5
+            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
             osc.connect(gain);
@@ -40,7 +39,7 @@ try {
             osc.start();
             osc.stop(audioCtx.currentTime + 0.4);
         } catch (e) {
-            console.log("Áudio bloqueado pelo navegador até haver interação.");
+            console.log("Áudio bloqueado pelo navegador.");
         }
     }
 
@@ -74,11 +73,17 @@ try {
         let existe = jogadores.some(j => j.id === playerId);
 
         if (!existe) {
+            if (jogadores.length >= 4) {
+                alert("A mesa está cheia (máximo de 4 jogadores).");
+                window.location.href = 'index.html';
+                return;
+            }
             jogadores.push({
                 id: playerId,
                 nome: playerName,
                 mao: [],
-                gruposBaixados: []
+                gruposBaixados: [],
+                pontos: 0
             });
             await updateDoc(roomRef, { jogadores: jogadores });
         }
@@ -89,7 +94,7 @@ try {
     onSnapshot(roomRef, (docSnap) => {
         if (!docSnap.exists()) {
             if (!saindoDaSala) {
-                alert("A sala foi encerrada porque um jogador saiu.");
+                alert("A sala foi encerrada.");
                 window.location.href = 'index.html';
             }
             return;
@@ -105,7 +110,6 @@ try {
             return;
         }
 
-        // Verifica se o turno mudou para mim e dispara o alerta
         if (gameState.status === 'jogando' && gameState.turno === playerId) {
             if (ultimoTurnoNotificado !== gameState.turno) {
                 ultimoTurnoNotificado = gameState.turno;
@@ -130,7 +134,6 @@ try {
             if (docSnap.exists()) {
                 let data = docSnap.data();
                 let jogadoresRestantes = (data.jogadores || []).filter(j => j.id !== playerId);
-
                 if (jogadoresRestantes.length < (data.jogadores || []).length) {
                     await updateDoc(roomRef, { status: 'desconectada', jogadores: jogadoresRestantes });
                 }
@@ -138,13 +141,10 @@ try {
         } catch (e) {
             console.error("Erro ao processar saída:", e);
         }
-
         localStorage.removeItem('cacheta_roomId');
     }
 
-    window.addEventListener('beforeunload', () => {
-        sairDaSala();
-    });
+    window.addEventListener('beforeunload', () => { sairDaSala(); });
 
     document.getElementById('leaveBtn')?.addEventListener('click', async () => {
         await sairDaSala();
@@ -157,33 +157,26 @@ try {
 
         if (gameState && gameState.status === 'finalizada') {
             if (modal && vencedorTexto) {
-                vencedorTexto.innerText = `${gameState.vencedor} Bateu e Venceu a Partida! 🏆`;
+                vencedorTexto.innerText = `${gameState.vencedor} Bateu e Venceu a Rodada! 🏆`;
                 modal.style.display = 'flex';
             }
 
+            // Somente o admin reinicia o jogo e distribui as pontuações guardadas
             if (gameState.jogadores && gameState.jogadores[0].id === playerId) {
                 setTimeout(async () => {
                     let deck = criarBaralhoCacheta();
                     const vira = deck.pop();
 
-                    let jogadoresAtuais = gameState.jogadores.map(j => ({
-                        id: j.id,
-                        nome: j.nome,
-                        mao: [],
-                        gruposBaixados: []
-                    }));
-
-                    let temBot = jogadoresAtuais.some(j => j.id.startsWith('p_bot'));
-                    let jogadoresReais = jogadoresAtuais.filter(j => !j.id.startsWith('p_bot'));
-
-                    if (jogadoresReais.length === 1 && !temBot) {
-                        jogadoresAtuais.push({
-                            id: 'p_bot_1',
-                            nome: 'Robô 🤖',
+                    let jogadoresAtuais = gameState.jogadores.map(j => {
+                        let ganhou = j.nome === gameState.vencedor;
+                        return {
+                            id: j.id,
+                            nome: j.nome,
                             mao: [],
-                            gruposBaixados: []
-                        });
-                    }
+                            gruposBaixados: [],
+                            pontos: (j.pontos || 0) + (ganhou ? 1 : 0) // Guarda e acumula os pontos
+                        };
+                    });
 
                     jogadoresAtuais.forEach(j => {
                         j.mao = deck.splice(0, 9);
@@ -216,10 +209,8 @@ try {
     if (roomDisplay) {
         roomDisplay.addEventListener('click', () => {
             navigator.clipboard.writeText(roomId).then(() => {
-                alert(`Código da sala "${roomId}" copiado para a área de transferência!`);
-            }).catch(err => {
-                console.error('Erro ao copiar:', err);
-            });
+                alert(`Código da sala "${roomId}" copiado!`);
+            }).catch(err => { console.error(err); });
         });
     }
 
@@ -247,19 +238,19 @@ try {
                     const topoLixeira = gameState.lixeira[gameState.lixeira.length - 1];
                     discardEl.innerHTML = renderCardHTML(topoLixeira, coringaStr);
                 } else {
-                    discardEl.innerHTML = '<div style="color: rgba(255,255,255,0.5); font-size: 0.8rem; text-align:center;">Vazio</div>';
+                    discardEl.innerHTML = '<div style="color: rgba(255,255,255,0.5); font-size: 0.4rem; text-align:center;">Vazio</div>';
                 }
             }
 
             const statusTurno = document.getElementById('statusTurno');
             if (statusTurno) {
                 if (!gameState.status || gameState.status === 'aguardando') {
-                    statusTurno.innerText = `Aguardando o administrador iniciar a partida...`;
+                    statusTurno.innerText = `Aguardando o administrador iniciar...`;
                     statusTurno.style.color = '#f1c40f';
                 } else {
                     const meuTurno = gameState.turno === playerId;
                     if (meuTurno) {
-                        statusTurno.innerHTML = `🔔 SEU TURNO! Fase: ${gameState.faseTurno === 'comprar' ? 'Compre do Monte ou Lixeira' : 'Descarte uma carta'}`;
+                        statusTurno.innerHTML = `🔔 SEU TURNO! Fase: ${gameState.faseTurno === 'comprar' ? 'Compre' : 'Descarte'}`;
                         statusTurno.style.color = '#2ecc71';
                     } else {
                         statusTurno.innerText = `Turno de outro jogador...`;
@@ -277,20 +268,40 @@ try {
                 }
             }
 
+            // Renderiza os Oponentes com Avatar, Pontos e Cartas Viradas (Verso)
             const playersArea = document.getElementById('playersArea');
             if (playersArea) {
                 playersArea.innerHTML = '';
                 if (gameState.jogadores) {
                     gameState.jogadores.forEach(j => {
-                        const div = document.createElement('div');
-                        div.style.cssText = "background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; color: #fff;";
-                        let infoGrupos = j.gruposBaixados && j.gruposBaixados.length > 0 ? ` | Grupos: ${j.gruposBaixados.length}` : '';
-                        div.innerHTML = `<strong>${j.nome}</strong>: ${j.mao ? j.mao.length : 0} cartas${infoGrupos}`;
-                        playersArea.appendChild(div);
+                        if (j.id === playerId) return; // Não renderiza a si mesmo na área de oponentes
+
+                        const box = document.createElement('div');
+                        let isTurnoOponente = gameState.turno === j.id;
+                        box.className = `oponente-card-box ${isTurnoOponente ? 'ativo' : ''}`;
+                        
+                        let qtdCartas = j.mao ? j.mao.length : 0;
+                        let pontos = j.pontos || 0;
+                        
+                        let miniVersosHTML = '';
+                        for (let i = 0; i < qtdCartas; i++) {
+                            miniVersosHTML += `<div class="mini-verso"></div>`;
+                        }
+
+                        box.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <span style="font-size: 0.8rem;">👤</span>
+                                <strong>${j.nome}</strong> (${pontos} pts)
+                            </div>
+                            <div style="font-size: 0.45rem; color: #ccc; margin-top: 1px;">Cartas: ${qtdCartas}</div>
+                            <div class="oponente-cartas-verso">${miniVersosHTML}</div>
+                        `;
+                        playersArea.appendChild(box);
                     });
                 }
             }
 
+            // Renderiza a mão do próprio jogador
             const eu = gameState.jogadores ? gameState.jogadores.find(j => j.id === playerId) : null;
             const handEl = document.getElementById('playerHand');
             if (handEl) {
@@ -314,7 +325,7 @@ try {
                             cardDiv.style.borderColor = coresBorda[grupoIndex % coresBorda.length];
                             cardDiv.style.borderWidth = '3px';
                             cardDiv.style.borderStyle = 'solid';
-                            cardDiv.dataset.grupoIndex = grupoIndex; // Identifica a qual grupo pertence para poder desfazer
+                            cardDiv.dataset.grupoIndex = grupoIndex;
                         } else {
                             cardDiv.style.border = 'none';
                         }
@@ -341,11 +352,11 @@ try {
     function renderCardHTML(carta, coringaStr) {
         const ehCoringa = carta.valor === coringaStr;
         return `
-            <div class="card ${naipesCores[carta.naipe]}" style="width: 75px; height: 110px; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 6px; background: #fff; border-radius: 8px; box-sizing: border-box; font-weight: bold;">
+            <div class="card ${naipesCores[carta.naipe]}" style="width: 36px; height: 52px; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 2px; background: #fff; border-radius: 4px; box-sizing: border-box; font-weight: bold; font-size: 0.55rem;">
                 ${ehCoringa ? '<span class="coringa-badge">Coringa</span>' : ''}
-                <span style="font-size: 1rem; line-height: 1;">${carta.valor}</span>
-                <span style="font-size: 1.8rem; align-self: center; line-height: 1;">${naipesSimbolos[carta.naipe]}</span>
-                <span style="font-size: 1rem; align-self: flex-end; transform: rotate(180deg); line-height: 1;">${carta.valor}</span>
+                <span style="font-size: 0.6rem; line-height: 1;">${carta.valor}</span>
+                <span style="font-size: 1.1rem; align-self: center; line-height: 1;">${naipesSimbolos[carta.naipe]}</span>
+                <span style="font-size: 0.6rem; align-self: flex-end; transform: rotate(180deg); line-height: 1;">${carta.valor}</span>
             </div>
         `;
     }
@@ -422,24 +433,19 @@ try {
             if (!cartaArrastando) return;
 
             if (!toqueMovido) {
-                // Se a carta clicada já pertencia a um grupo baixado, ao dar um toque nela nós desfazemos aquele grupo!
                 if (cartaArrastando.dataset.grupoIndex !== undefined && gameState) {
                     const eu = gameState.jogadores.find(j => j.id === playerId);
                     const gIndex = parseInt(cartaArrastando.dataset.grupoIndex);
                     if (eu && eu.gruposBaixados && eu.gruposBaixados[gIndex]) {
-                        eu.gruposBaixados.splice(gIndex, 1); // Remove o grupo do banco
+                        eu.gruposBaixados.splice(gIndex, 1);
                         selectedCardsIndices = [];
                         window.selectedCardsIndices = selectedCardsIndices;
                         try {
                             await updateDoc(roomRef, { jogadores: gameState.jogadores });
-                        } catch (err) {
-                            console.error("Erro ao desfazer grupo:", err);
-                        }
+                        } catch (err) { console.error(err); }
                     }
                 } else {
-                    // Seleção normal para descarte ou novo grupo
                     cartaArrastando.classList.toggle("selected");
-                    
                     const cartasNaMão = Array.from(handContainer.querySelectorAll(".card"));
                     const indexCard = cartasNaMão.indexOf(cartaArrastando);
 
@@ -475,12 +481,8 @@ try {
                         window.selectedCardsIndices = selectedCardsIndices;
 
                         try {
-                            await updateDoc(roomRef, {
-                                jogadores: gameState.jogadores
-                            });
-                        } catch (err) {
-                            console.error("Erro ao salvar nova ordenação de cartas:", err);
-                        }
+                            await updateDoc(roomRef, { jogadores: gameState.jogadores });
+                        } catch (err) { console.error(err); }
                     }
                 }
             }
@@ -505,26 +507,28 @@ try {
 
         let jogadoresAtuais = gameState.jogadores ? [...gameState.jogadores] : [];
         if (jogadoresAtuais.length === 0) {
-            jogadoresAtuais.push({ id: playerId, nome: playerName, mao: [], gruposBaixados: [] });
+            jogadoresAtuais.push({ id: playerId, nome: playerName, mao: [], gruposBaixados: [], pontos: 0 });
         }
 
+        // Se estiver jogando sozinho, adiciona 1 robô de exemplo. Caso queira mais robôs, pode adicionar dinamicamente.
         let temBot = jogadoresAtuais.some(j => j.id.startsWith('p_bot'));
         let jogadoresReais = jogadoresAtuais.filter(j => !j.id.startsWith('p_bot'));
 
-        if (jogadoresReais.length === 1 && !temBot) {
+        if (jogadoresReais.length === 1 && !temBot && jogadoresAtuais.length < 4) {
             jogadoresAtuais.push({
                 id: 'p_bot_1',
                 nome: 'Robô 🤖',
                 mao: [],
-                gruposBaixados: []
+                gruposBaixados: [],
+                pontos: 0
             });
-        } else if (jogadoresReais.length > 1 && temBot) {
-            jogadoresAtuais = jogadoresAtuais.filter(j => !j.id.startsWith('p_bot'));
         }
 
         jogadoresAtuais.forEach(j => {
             j.gruposBaixados = [];
             j.mao = deck.splice(0, 9);
+            // Mantém os pontos existentes caso já tenham pontuado antes
+            j.pontos = j.pontos || 0;
         });
 
         await updateDoc(roomRef, {

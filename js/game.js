@@ -543,6 +543,19 @@ try {
     });
 
     document.getElementById('btnComprarMonte')?.addEventListener('click', async () => {
+        if (!gameState || gameState.status !== 'jogando') return;
+        if (gameState.turno !== playerId) {
+            alert("Não é o seu turno!");
+            return;
+        }
+
+        let eu = gameState.jogadores.find(j => j.id === playerId);
+        if (eu.mao.length >= 10 && gameState.faseTurno === 'comprar') {
+            await updateDoc(roomRef, { faseTurno: 'descartar' });
+            alert("Você já está com cartas suficientes. Por favor, descarte uma carta!");
+            return;
+        }
+
         if (!validarTurnoEFase('comprar')) return;
         if (!gameState.monte || gameState.monte.length === 0) {
             alert("O monte está vazio!");
@@ -551,7 +564,6 @@ try {
 
         let monte = [...gameState.monte];
         let cartaComprada = monte.pop();
-        let eu = gameState.jogadores.find(j => j.id === playerId);
         eu.mao.push(cartaComprada);
 
         await updateDoc(roomRef, {
@@ -563,6 +575,18 @@ try {
 
     document.getElementById('discardPile')?.addEventListener('click', async () => {
         if (!gameState || gameState.status !== 'jogando') return;
+        if (gameState.turno !== playerId) {
+            alert("Não é o seu turno!");
+            return;
+        }
+
+        let eu = gameState.jogadores.find(j => j.id === playerId);
+        if (eu.mao.length >= 10 && gameState.faseTurno === 'comprar') {
+            await updateDoc(roomRef, { faseTurno: 'descartar' });
+            alert("Você já está com cartas suficientes. Por favor, descarte uma carta!");
+            return;
+        }
+
         if (!validarTurnoEFase('comprar')) return;
         if (!gameState.lixeira || gameState.lixeira.length === 0) {
             alert("A lixeira está vazia!");
@@ -571,7 +595,6 @@ try {
 
         let lixeira = [...gameState.lixeira];
         let cartaComprada = lixeira.pop();
-        let eu = gameState.jogadores.find(j => j.id === playerId);
         eu.mao.push(cartaComprada);
 
         await updateDoc(roomRef, {
@@ -685,6 +708,17 @@ try {
 
     document.getElementById('btnDescartar')?.addEventListener('click', async () => {
         if (!gameState || gameState.status !== 'jogando') return;
+        if (gameState.turno !== playerId) {
+            alert("Não é o seu turno!");
+            return;
+        }
+
+        let eu = gameState.jogadores.find(j => j.id === playerId);
+
+        if (gameState.faseTurno !== 'descartar' && eu.mao.length > 9) {
+            await updateDoc(roomRef, { faseTurno: 'descartar' });
+        }
+
         if (!validarTurnoEFase('descartar')) return;
         if (selectedCardsIndices.length !== 1) {
             alert("Selecione exatamente 1 carta para descartar!");
@@ -692,7 +726,6 @@ try {
         }
 
         let indiceDescarte = selectedCardsIndices[0];
-        let eu = gameState.jogadores.find(j => j.id === playerId);
         let cartaDescartada = eu.mao[indiceDescarte];
 
         if (eu.gruposBaixados) {

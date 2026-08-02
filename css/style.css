@@ -1,3 +1,8 @@
+/* Remove o destaque azul padrão de toque nos navegadores móveis */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -130,8 +135,8 @@ input[type="text"] {
 .table-center {
     display: flex;
     justify-content: center;
-    gap: 30px;
-    margin: 15px 0;
+    gap: 20px;
+    margin: 10px 0;
 }
 
 .card-pile {
@@ -139,7 +144,7 @@ input[type="text"] {
     cursor: pointer;
 }
 
-/* ESTILO DA CARTA (Inspirado no design realista) */
+/* ESTILO DA CARTA (Realista) */
 .card {
     width: 65px;
     height: 95px;
@@ -156,7 +161,9 @@ input[type="text"] {
     user-select: none;
     position: relative;
     border: 1px solid #dcdcdc;
-    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+    cursor: pointer;
+    touch-action: none;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
 }
 
 .card.red {
@@ -215,6 +222,16 @@ input[type="text"] {
     min-height: 24px;
 }
 
+.coringa-info {
+    font-size: 0.85rem;
+    color: #f1c40f;
+    background: rgba(0,0,0,0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-top: 5px;
+    display: inline-block;
+}
+
 .hand {
     display: flex;
     justify-content: center;
@@ -224,11 +241,7 @@ input[type="text"] {
     perspective: 1000px;
 }
 
-.hand .card {
-    cursor: pointer;
-}
-
-/* Animação suave ao passar o mouse ou selecionar */
+/* Animações e efeitos na mão */
 .hand .card:hover {
     transform: translateY(-8px);
 }

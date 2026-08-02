@@ -1,82 +1,51 @@
 import { db } from './firebase.js';
-import { collection, addDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(() => console.log("Service Worker registrado com sucesso!"))
-            .catch(err => console.log("Erro ao registrar Service Worker:", err));
-    });
-}
-
-document.getElementById('createRoomBtn').addEventListener('click', async () => {
-    const name = document.getElementById('playerName').value.trim();
-    if (!name) {
-        alert('Por favor, digite seu apelido!');
+document.getElementById('createRoomBtn')?.addEventListener('click', async () => {
+    const playerName = document.getElementById('playerName').value.trim();
+    if (!playerName) {
+        alert("Digite seu apelido antes de criar a mesa!");
         return;
     }
 
     try {
         const docRef = await addDoc(collection(db, "mesas"), {
-            criador: name,
-            status: "aguardando",
-            turno: null,
+            criador: playerName,
+            status: 'aguardando',
+            jogadores: [
+                { id: 'p1', nome: playerName, mao: [] },
+                { id: 'p_bot_1', nome: 'Robô Ágil', mao: [] }
+            ],
+            turno: 'p1',
+            faseTurno: 'comprar',
             monte: [],
             lixeira: [],
-            jogadores: [{ id: "p1", nome: name, mao: [] }]
+            vira: null
         });
 
-        localStorage.setItem('cacheta_playerId', 'p1');
-        localStorage.setItem('cacheta_playerName', name);
         localStorage.setItem('cacheta_roomId', docRef.id);
+        localStorage.setItem('cacheta_playerId', 'p1');
+        localStorage.setItem('cacheta_playerName', playerName);
 
         window.location.href = `jogo.html?room=${docRef.id}`;
     } catch (e) {
         console.error("Erro ao criar mesa: ", e);
-        alert("Erro ao conectar com o Firebase. Verifique suas credenciais em js/firebase.js");
+        alert("Erro ao criar mesa. Verifique sua conexão com o Firebase.");
     }
 });
 
-document.getElementById('joinRoomBtn').addEventListener('click', async () => {
-    const name = document.getElementById('playerName').value.trim();
-    const roomId = document.getElementById('roomCode').value.trim();
+document.getElementById('joinRoomBtn')?.addEventListener('click', () => {
+    const playerName = document.getElementById('playerName').value.trim();
+    const roomCode = document.getElementById('roomCode').value.trim();
 
-    if (!name || !roomId) {
-        alert('Digite seu apelido e o código da mesa!');
+    if (!playerName || !roomCode) {
+        alert("Preencha seu apelido e o código da mesa!");
         return;
     }
 
-    const roomRef = doc(db, "mesas", roomId);
-    const roomSnap = await getDoc(roomRef);
+    localStorage.setItem('cacheta_roomId', roomCode);
+    localStorage.setItem('cacheta_playerId', 'p2');
+    localStorage.setItem('cacheta_playerName', playerName);
 
-    if (roomSnap.exists()) {
-        const data = roomSnap.data();
-        
-        if (data.status !== "aguardando") {
-            alert('Esta partida já começou!');
-            return;
-        }
-
-        const jogadores = data.jogadores || [];
-        
-        // Verifica se o nome já existe na mesa
-        const idExistente = jogadores.find(j => j.nome === name);
-        let newPlayerId;
-
-        if (idExistente) {
-            newPlayerId = idExistente.id;
-        } else {
-            newPlayerId = `p${jogadores.length + 1}`;
-            jogadores.push({ id: newPlayerId, nome: name, mao: [] });
-            await updateDoc(roomRef, { jogadores });
-        }
-
-        localStorage.setItem('cacheta_playerId', newPlayerId);
-        localStorage.setItem('cacheta_playerName', name);
-        localStorage.setItem('cacheta_roomId', roomId);
-
-        window.location.href = `jogo.html?room=${roomId}`;
-    } else {
-        alert('Mesa não encontrada!');
-    }
+    window.location.href = `jogo.html?room=${roomCode}`;
 });

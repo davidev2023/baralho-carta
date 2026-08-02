@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cacheta-pwa-v1';
+const CACHE_NAME = 'cacheta-pwa-v2';
 const assets = [
   './index.html',
   './jogo.html',
@@ -6,13 +6,14 @@ const assets = [
   './js/app.js',
   './js/game.js',
   './js/firebase.js',
-  './manifest.json'
+  './manifest.json',
+  './logo.png'
 ];
 
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      cache.addAll(assets);
+      return cache.addAll(assets);
     })
   );
 });

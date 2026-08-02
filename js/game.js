@@ -77,7 +77,7 @@ function atualizarInterface(data) {
 
     if (playerId === 'p1') {
         adminControls.style.display = 'block';
-        btnIniciar.innerText = (data.status === 'jogando') ? "Reiniciar Partida" : "Iniciar Partida";
+        btnIniciar.innerText = (data.status === 'jogando' || data.status === 'fim') ? "Reiniciar Partida" : "Iniciar Partida";
     } else {
         adminControls.style.display = 'none';
     }
@@ -87,19 +87,29 @@ function atualizarInterface(data) {
 
     const coringaPile = document.getElementById('coringaPile');
     coringaPile.innerHTML = '<div style="font-size:0.75rem; margin-bottom:2px;">Vira</div>';
+    
+    let valorCoringaRodada = "-";
     if (data.vira) {
         coringaPile.appendChild(criarElementoCarta(data.vira));
-        document.getElementById('coringaTexto').innerText = `Coringa da Rodada: ${obterCoringa(data.vira)}`;
+        valorCoringaRodada = obterCoringa(data.vira);
+        document.getElementById('coringaTexto').innerText = `Coringa da Rodada: ${valorCoringaRodada}`;
     } else {
         document.getElementById('coringaTexto').innerText = `Coringa: -`;
     }
 
+    const meuObjeto = data.jogadores.find(p => p.id === playerId);
+
     if (data.status === 'aguardando') {
         statusTurno.innerText = "Aguardando o criador iniciar a partida...";
     } else if (data.status === 'fim') {
-        statusTurno.innerText = `🏆 Fim de jogo! ${data.vencedorNome || 'Partida encerrada'} venceu!`;
+        statusTurno.innerText = `🏆 Fim de jogo! ${data.vencedorNome || 'Alguém'} venceu a partida!`;
     } else if (meuTurno) {
-        statusTurno.innerText = (data.faseTurno === 'comprar') ? "Sua vez! Compre do monte ou da lixeira." : "Sua vez! Arraste para encaixar, selecione para descartar ou bata.";
+        let textoStatus = (data.faseTurno === 'comprar') ? "Sua vez! Compre do monte ou da lixeira." : "Sua vez! Arraste para encaixar, selecione para descartar ou bata.";
+        
+        if (meuObjeto && meuObjeto.marcadas && meuObjeto.marcadas.length >= 9 && meuObjeto.mao.length === 10) {
+            textoStatus = "✨ Sugestão: Você completou os 3 grupos! Selecione a carta de descarte e clique em Bater!";
+        }
+        statusTurno.innerText = textoStatus;
     } else {
         statusTurno.innerText = "Turno de outro jogador...";
     }
@@ -114,7 +124,6 @@ function atualizarInterface(data) {
         discardPile.appendChild(criarElementoCarta('Vazio'));
     }
 
-    // Placar
     const playersArea = document.getElementById('playersArea');
     playersArea.innerHTML = '';
     if (data.jogadores) {
@@ -130,8 +139,6 @@ function atualizarInterface(data) {
         });
     }
 
-    // Mão do Jogador com Animação Lenta e Realista ao Soltar
-    const meuObjeto = data.jogadores.find(p => p.id === playerId);
     if (meuObjeto && meuObjeto.mao) {
         const handDiv = document.getElementById('playerHand');
         handDiv.innerHTML = '';
@@ -139,10 +146,26 @@ function atualizarInterface(data) {
         if (!meuObjeto.marcadas) meuObjeto.marcadas = [];
 
         meuObjeto.mao.forEach((carta, index) => {
+            const valorCarta = carta.slice(0, -1);
+            const isCoringa = (valorCarta === valorCoringaRodada);
+
             const cardEl = criarElementoCarta(carta);
             
-            if (meuObjeto.marcadas.includes(index)) {
-                cardEl.classList.add('grupo-salvo');
+            if (isCoringa) {
+                cardEl.classList.add('coringa-carta');
+                const seloCoringa = document.createElement('div');
+                seloCoringa.innerText = '🃏 Coringa';
+                seloCoringa.style.cssText = 'position:absolute; bottom:25px; left:2px; right:2px; font-size:0.6rem; background:rgba(241,196,15,0.9); color:#000; text-align:center; border-radius:2px; font-weight:bold;';
+                cardEl.appendChild(seloCoringa);
+            }
+
+            const posMarcada = meuObjeto.marcadas.indexOf(index);
+            if (posMarcada > -1) {
+                const grupoCor = Math.floor(posMarcada / 3);
+                if (grupoCor === 0) cardEl.classList.add('grupo-salvo-1');
+                else if (grupoCor === 1) cardEl.classList.add('grupo-salvo-2');
+                else if (grupoCor === 2) cardEl.classList.add('grupo-salvo-3');
+                else cardEl.classList.add('grupo-salvo-4');
             }
 
             if (index === selectedCardIndex) {
@@ -203,21 +226,6 @@ function atualizarInterface(data) {
                     if (targetIndex !== -1) {
                         ultimoTargetIndex = targetIndex;
                     }
-
-                    allCards.forEach((cEl, idx) => {
-                        if (idx === index) return;
-                        // Transição mais suave e orgânica ao abrir espaço
-                        cEl.style.transition = 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)';
-                        if (targetIndex !== -1) {
-                            if (index < targetIndex && idx > index && idx <= targetIndex) {
-                                cEl.style.transform = index < targetIndex ? 'translateX(-35px)' : 'translateX(35px)';
-                            } else if (index > targetIndex && idx >= targetIndex && idx < index) {
-                                cEl.style.transform = 'translateX(35px)';
-                            } else {
-                                cEl.style.transform = 'translate(0, 0)';
-                            }
-                        }
-                    });
                 }
             }, { passive: true });
 
@@ -231,12 +239,9 @@ function atualizarInterface(data) {
                     let targetIndex = ultimoTargetIndex;
 
                     if (targetIndex > -1 && targetIndex !== index) {
-                        // Animação desacelerada e fluida imitando a realidade (dura 0.55 segundos)
                         cardEl.style.transition = 'transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.55s ease';
                         cardEl.style.transform = 'translate(0, 0) scale(1.02)';
-                        cardEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
 
-                        // Aguarda a animação lenta terminar antes de atualizar os dados no Firebase
                         await new Promise(resolve => setTimeout(resolve, 520));
 
                         let maoTemp = [...meuObjeto.mao];
@@ -277,7 +282,6 @@ function atualizarInterface(data) {
         });
     }
 
-    // Botões
     const btnMonte = document.getElementById('btnComprarMonte');
     const btnLixeira = document.getElementById('btnComprarLixeira');
     const btnDescartar = document.getElementById('btnDescartar');
@@ -320,7 +324,7 @@ function atualizarInterface(data) {
 async function salvarMaoEOrdenacao(novaMao, novasMarcadas) {
     let jogadores = [...estadoJogoCache.jogadores];
     let jIndex = jogadores.findIndex(j => j.id === playerId);
-    jogadores[jIndex] = { ...jogadores[jIndex], mao: novaMao, marcadas: novasMarcadas };
+    jog jogadores[jIndex] = { ...jogadores[jIndex], mao: novaMao, marcadas: novasMarcadas }; // ajuste de sintaxe caso necessário
     await updateDoc(roomRef, { jogadores });
 }
 
@@ -443,6 +447,16 @@ document.getElementById('btnBater').addEventListener('click', async () => {
 
     let jogadores = [...estadoJogoCache.jogadores];
     let jogadorAtual = jogadores.find(j => j.id === playerId);
+
+    if (jogadorAtual.mao.length !== 10) {
+        alert("Você precisa estar com 10 cartas para bater!");
+        return;
+    }
+
+    if (!jogadorAtual.marcadas || jogadorAtual.marcadas.length !== 9) {
+        alert("Você precisa marcar 3 grupos válidos de 3 cartas (total de 9 cartas) antes de bater!");
+        return;
+    }
 
     const cartaDescartada = jogadorAtual.mao.splice(selectedCardIndex, 1)[0];
     selectedCardIndex = null;

@@ -1,13 +1,9 @@
-/* Remove o destaque azul padrão de toque nos navegadores móveis */
-* {
-    -webkit-tap-highlight-color: transparent;
-}
-
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    -webkit-tap-highlight-color: transparent; /* Remove o fundo azul padrão ao tocar no celular */
 }
 
 body {
@@ -250,6 +246,13 @@ input[type="text"] {
     transform: translateY(-16px) scale(1.05);
     border: 2px solid #f1c40f;
     box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+
+/* Borda verde brilhante para cartas marcadas em sequência/jogo */
+.card.grupo-salvo {
+    border: 3px solid #2ecc71 !important;
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.8) !important;
+    transform: translateY(-5px);
 }
 
 .actions-area {

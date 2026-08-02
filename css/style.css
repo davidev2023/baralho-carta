@@ -3,7 +3,7 @@
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    -webkit-tap-highlight-color: transparent; /* Remove o fundo azul padrão ao tocar no celular */
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -202,6 +202,12 @@ input[type="text"] {
     border: 1px solid #bdc3c7;
 }
 
+/* Destaque do Coringa */
+.card.coringa-carta {
+    box-shadow: 0 0 10px #f1c40f !important;
+    border: 2px solid #f1c40f !important;
+}
+
 .player-hand-area {
     background: rgba(0,0,0,0.25);
     padding: 15px;
@@ -237,7 +243,6 @@ input[type="text"] {
     perspective: 1000px;
 }
 
-/* Animações e efeitos na mão */
 .hand .card:hover {
     transform: translateY(-8px);
 }
@@ -248,10 +253,28 @@ input[type="text"] {
     box-shadow: 0 10px 20px rgba(0,0,0,0.4);
 }
 
-/* Borda verde brilhante para cartas marcadas em sequência/jogo */
-.card.grupo-salvo {
+/* Bordas coloridas cíclicas a cada 3 cartas marcadas */
+.card.grupo-salvo-1 {
     border: 3px solid #2ecc71 !important;
     box-shadow: 0 0 12px rgba(46, 204, 113, 0.8) !important;
+    transform: translateY(-5px);
+}
+
+.card.grupo-salvo-2 {
+    border: 3px solid #3498db !important;
+    box-shadow: 0 0 12px rgba(52, 152, 219, 0.8) !important;
+    transform: translateY(-5px);
+}
+
+.card.grupo-salvo-3 {
+    border: 3px solid #9b59b6 !important;
+    box-shadow: 0 0 12px rgba(155, 89, 182, 0.8) !important;
+    transform: translateY(-5px);
+}
+
+.card.grupo-salvo-4 {
+    border: 3px solid #f1c40f !important;
+    box-shadow: 0 0 12px rgba(241, 196, 15, 0.8) !important;
     transform: translateY(-5px);
 }
 

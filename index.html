@@ -10,6 +10,29 @@
     <meta name="theme-color" content="#0d4a22">
     
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Força a tela de início a ficar em modo retrato (vertical) */
+        @media screen and (orientation: landscape) {
+            body::before {
+                content: "Por favor, desative a rotação e use o celular na vertical (em pé) 📱🔄";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: #0d4a22;
+                color: #fff;
+                z-index: 99999;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                font-size: 1.1rem;
+                padding: 20px;
+                font-weight: bold;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="game-container" style="justify-content: center; align-items: center;">

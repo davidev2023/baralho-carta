@@ -39,7 +39,7 @@
             background-color: #0d4a22;
             color: #fff;
             width: 100vw;
-            height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -47,12 +47,12 @@
 
         header {
             background-color: rgba(0, 0, 0, 0.4);
-            padding: 2px 8px;
+            padding: 2px 6px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.7rem;
-            height: 24px;
+            font-size: 0.65rem;
+            height: 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             flex-shrink: 0;
         }
@@ -61,11 +61,12 @@
             background-color: #27ae60;
             color: white;
             border: none;
-            padding: 5px 10px;
+            padding: 3px 6px;
             border-radius: 4px;
             font-weight: bold;
             cursor: pointer;
-            font-size: 0.65rem;
+            font-size: 0.55rem;
+            white-space: nowrap;
         }
 
         .btn-acao:active { opacity: 0.8; }
@@ -73,13 +74,13 @@
         .btn-azul { background-color: #2980b9; }
 
         .mesa-container {
-            flex: 1;
+            flex: 1 1 auto;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
-            padding: 2px 8px;
+            justify-content: space-between;
+            padding: 2px 6px;
             position: relative;
-            overflow: visible;
+            min-height: 0;
         }
 
         .topo-mesa {
@@ -87,6 +88,7 @@
             justify-content: space-between;
             align-items: flex-start;
             gap: 10px;
+            flex-shrink: 0;
         }
 
         .info-jogadores {
@@ -94,15 +96,15 @@
             flex-direction: column;
             gap: 1px;
             max-width: 50%;
-            font-size: 0.6rem;
+            font-size: 0.5rem;
         }
 
         .centro-mesa {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 35px;
-            margin: 0 auto;
+            gap: 20px;
+            margin: auto;
         }
 
         .monte-bloco, .lixeira-bloco, .vira-bloco {
@@ -110,15 +112,15 @@
             flex-direction: column;
             align-items: center;
             gap: 1px;
-            font-size: 0.55rem;
+            font-size: 0.5rem;
         }
 
         .monte-cartas {
-            width: 44px;
-            height: 64px;
+            width: 36px;
+            height: 52px;
             background: #112233;
             border: 2px dashed rgba(255,255,255,0.4);
-            border-radius: 5px;
+            border-radius: 4px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -129,14 +131,14 @@
         }
 
         .card {
-            width: 44px;
-            height: 64px;
+            width: 36px;
+            height: 52px;
             background: #fff;
-            border-radius: 5px;
+            border-radius: 4px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 3px;
+            padding: 2px;
             box-sizing: border-box;
             font-weight: bold;
             position: relative;
@@ -144,26 +146,26 @@
             transition: transform 0.15s ease, box-shadow 0.15s ease;
             cursor: pointer;
             flex-shrink: 0;
-            font-size: 0.7rem;
+            font-size: 0.55rem;
             touch-action: none;
         }
 
         #coringaPile .card {
-            width: 44px !important;
-            height: 64px !important;
+            width: 36px !important;
+            height: 52px !important;
             margin: 0 auto;
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            padding: 3px !important;
+            padding: 2px !important;
         }
 
         .card.red { color: #e74c3c; }
         .card.black { color: #2c3e50; }
 
         .card.selected {
-            transform: translateY(-32px);
-            box-shadow: 0 8px 16px rgba(241, 196, 15, 0.9);
+            transform: translateY(-22px);
+            box-shadow: 0 6px 12px rgba(241, 196, 15, 0.9);
             border: 2px solid #f1c40f !important;
             z-index: 999;
         }
@@ -173,18 +175,18 @@
             z-index: 99999 !important;
             pointer-events: none;
             opacity: 0.9;
-            transform: scale(1.1) translateY(-25px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.6);
+            transform: scale(1.1) translateY(-18px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.6);
             transition: none !important;
         }
 
         .coringa-badge {
             position: absolute;
-            top: -5px;
-            right: -5px;
+            top: -4px;
+            right: -4px;
             background: #f1c40f;
             color: #000;
-            font-size: 0.45rem;
+            font-size: 0.35rem;
             padding: 1px 2px;
             border-radius: 2px;
             font-weight: bold;
@@ -194,22 +196,21 @@
 
         .painel-controle-jogo {
             background: rgba(0,0,0,0.4);
-            padding: 1px 6px;
-            border-radius: 4px;
+            padding: 1px 4px;
+            border-radius: 3px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             flex-shrink: 0;
-            margin-top: auto;
         }
 
         .mao-container {
-            background-color: rgba(0, 0, 0, 0.75);
-            padding: 6px 8px 6px 8px;
-            border-radius: 8px 8px 0 0;
+            background-color: rgba(0, 0, 0, 0.85);
+            padding: 2px 6px;
+            border-radius: 6px 6px 0 0;
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 0px;
             width: 100%;
             flex-shrink: 0;
             overflow: visible !important;
@@ -219,17 +220,17 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            gap: 6px;
             overflow: visible !important;
         }
 
         .mao-cartas {
             display: flex;
-            gap: 6px;
+            gap: 4px;
             overflow-x: auto;
             overflow-y: visible !important;
-            padding: 26px 4px 4px 4px;
-            min-height: 96px;
+            padding: 18px 2px 2px 2px;
+            min-height: 70px;
             align-items: center;
             position: relative;
             z-index: 50;
@@ -239,7 +240,7 @@
         .botoes-acao-mesa {
             display: flex;
             flex-direction: row;
-            gap: 6px;
+            gap: 4px;
             align-items: center;
             flex-shrink: 0;
         }
@@ -252,22 +253,22 @@
 
     <header>
         <div id="roomDisplay" style="cursor: pointer;" title="Clique para copiar">Mesa: Carregando...</div>
-        <button id="leaveBtn" class="btn-acao btn-vermelho" style="padding: 1px 4px; font-size: 0.55rem;">Sair</button>
+        <button id="leaveBtn" class="btn-acao btn-vermelho" style="padding: 1px 4px; font-size: 0.5rem;">Sair</button>
     </header>
 
     <div class="mesa-container">
         <div class="topo-mesa">
             <div id="playersArea" class="info-jogadores"></div>
             <div id="adminControls" style="display: none;">
-                <button id="btnIniciarPartida" class="btn-acao" style="background-color: #f39c12; font-size: 0.55rem;">Iniciar Partida 🎮</button>
+                <button id="btnIniciarPartida" class="btn-acao" style="background-color: #f39c12; font-size: 0.5rem;">Iniciar 🎮</button>
             </div>
         </div>
 
         <div class="centro-mesa">
             <div class="monte-bloco">
                 <div id="btnComprarMonte" class="monte-cartas" title="Comprar do Monte">
-                    <span style="font-size: 0.9rem;">🂠</span>
-                    <span id="deckCount" style="position: absolute; bottom: 2px; font-size: 0.5rem; background: rgba(0,0,0,0.6); padding: 1px 3px; border-radius: 2px; color: #fff;">0</span>
+                    <span style="font-size: 0.7rem;">🂠</span>
+                    <span id="deckCount" style="position: absolute; bottom: 1px; font-size: 0.4rem; background: rgba(0,0,0,0.6); padding: 1px 2px; border-radius: 2px; color: #fff;">0</span>
                 </div>
                 <span>Monte</span>
             </div>
@@ -279,25 +280,25 @@
 
             <div class="lixeira-bloco">
                 <div id="discardPile" class="monte-cartas" style="background: #fff; border-style: solid; border-color: #ccc;">
-                    <div style="color: rgba(0,0,0,0.4); font-size: 0.5rem; text-align:center;">Vazio</div>
+                    <div style="color: rgba(0,0,0,0.4); font-size: 0.4rem; text-align:center;">Vazio</div>
                 </div>
                 <span>Lixeira</span>
             </div>
         </div>
-    </div>
-
-    <div class="painel-controle-jogo">
-        <div id="statusTurno" style="font-size: 0.6rem; font-weight: bold; color: #f1c40f; padding: 2px 0;">Carregando jogo...</div>
+        
+        <div class="painel-controle-jogo">
+            <div id="statusTurno" style="font-size: 0.5rem; font-weight: bold; color: #f1c40f; padding: 1px 0;">Carregando jogo...</div>
+        </div>
     </div>
 
     <div class="mao-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.4rem;">
             <span id="infoReordenar" style="color: rgba(255,255,255,0.8);">1 toque seleciona • Arraste para reorganizar</span>
         </div>
         <div class="linha-inferior-conteudo">
             <div id="playerHand" class="mao-cartas"></div>
             <div class="botoes-acao-mesa">
-                <button id="btnMarcarGrupo" class="btn-acao btn-azul">Baixar Grupo</button>
+                <button id="btnMarcarGrupo" class="btn-acao btn-azul">Baixar</button>
                 <button id="btnBater" class="btn-acao" style="background-color: #8e44ad;">Bater 🏆</button>
                 <button id="btnDescartar" class="btn-acao btn-vermelho">Descartar</button>
             </div>
@@ -310,7 +311,6 @@
         <p style="font-size: 0.75rem; color: #ccc;">A mesa será reiniciada em instantes...</p>
     </div>
 
-    <!-- Apenas a importação do script principal do jogo -->
     <script type="module" src="js/game.js"></script>
 </body>
 </html>

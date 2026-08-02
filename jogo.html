@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesa de Cacheta - PWA</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1b4d3e">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <span id="roomDisplay">Mesa: Carregando...</span>
+            <button id="leaveBtn" class="btn-small">Sair</button>
+        </header>
+
+        <!-- Informações dos adversários / Placar / Status -->
+        <div id="playersArea" class="players-area">
+            <!-- Renderizado dinamicamente via JS -->
+        </div>
+
+        <!-- Controles de Início / Reinício da Partida -->
+        <div id="adminControls" style="text-align: center; margin: 5px 0; display: none;">
+            <button id="btnIniciarPartida" class="btn primary" style="padding: 8px 16px; font-size: 0.9rem;">Iniciar Partida</button>
+        </div>
+
+        <!-- Área Central da Mesa (Monte e Lixeira) -->
+        <div class="table-center">
+            <div id="deckPile" class="card-pile">
+                <div class="card back">Monte</div>
+                <span id="deckCount" style="font-size: 0.85rem;">0</span>
+            </div>
+            <div id="discardPile" class="card-pile">
+                <div class="card discard">
+                    <span class="card-top"></span>
+                    <span class="card-center">Vazio</span>
+                    <span class="card-bottom"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área do Jogador Atual -->
+        <div class="player-hand-area">
+            <div class="info-vez">
+                <h3 id="statusTurno">Aguardando início...</h3>
+            </div>
+            <div id="playerHand" class="hand">
+                <!-- Suas cartas aparecem aqui -->
+            </div>
+            <div class="actions-area">
+                <button id="btnComprarMonte" class="btn action" disabled>Comprar Monte</button>
+                <button id="btnComprarLixeira" class="btn action" disabled>Pegar Lixeira</button>
+                <button id="btnDescartar" class="btn action danger" disabled>Descartar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/game.js"></script>
+</body>
+</html>

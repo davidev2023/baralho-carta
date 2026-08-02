@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cacheta PWA</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1b4d3e">
+</head>
+<body>
+    <div class="lobby-container">
+        <h1>🃏 Cacheta Online</h1>
+        <p>Jogue cacheta em tempo real com seus amigos!</p>
+        
+        <div class="card-box">
+            <input type="text" id="playerName" placeholder="Digite seu Apelido" maxlength="15">
+            <button id="createRoomBtn" class="btn primary">Criar Nova Mesa</button>
+            
+            <div class="join-section">
+                <input type="text" id="roomCode" placeholder="Código da Mesa (Ex: A1B2)">
+                <button id="joinRoomBtn" class="btn secondary">Entrar na Mesa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Modular) -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

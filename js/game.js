@@ -368,8 +368,10 @@ try {
         let toqueMovido = false;
         let toqueInicioX = 0;
         let toqueInicioY = 0;
+        let IDUnicoArrastando = null;
 
         handContainer.addEventListener("touchstart", (e) => {
+            if (cartaArrastando) return;
             const cardEl = e.target.closest(".card");
             if (!cardEl) return;
             
@@ -383,6 +385,7 @@ try {
             if (indexOrigem === -1) return;
 
             cartaArrastando = cardEl;
+            IDUnicoArrastando = cardEl.dataset.idUnico;
         }, { passive: true });
 
         handContainer.addEventListener("touchmove", (e) => {
@@ -392,7 +395,7 @@ try {
             const diffX = Math.abs(touch.clientX - toqueInicioX);
             const diffY = Math.abs(touch.clientY - toqueInicioY);
 
-            if ((diffX > 10 || diffY > 10) && !cloneVisual) {
+            if ((diffX > 8 || diffY > 8) && !cloneVisual) {
                 toqueMovido = true;
                 cloneVisual = cartaArrastando.cloneNode(true);
                 cloneVisual.className = cartaArrastando.className + " card-sendo-arrastada";
@@ -428,6 +431,13 @@ try {
         const finalizarArrasto = async () => {
             if (!cartaArrastando) return;
 
+            if (cloneVisual) {
+                cloneVisual.remove();
+                cloneVisual = null;
+            }
+
+            cartaArrastando.style.opacity = "1";
+
             if (!toqueMovido) {
                 if (cartaArrastando.dataset.grupoIndex !== undefined && gameState) {
                     const eu = gameState.jogadores.find(j => j.id === playerId);
@@ -441,11 +451,11 @@ try {
                         } catch (err) { console.error(err); }
                     }
                 } else {
-                    cartaArrastando.classList.toggle("selected");
                     const cartasNaMão = Array.from(handContainer.querySelectorAll(".card"));
                     const indexCard = cartasNaMão.indexOf(cartaArrastando);
 
                     if (indexCard > -1) {
+                        cartaArrastando.classList.toggle("selected");
                         const pos = selectedCardsIndices.indexOf(indexCard);
                         if (pos > -1) {
                             selectedCardsIndices.splice(pos, 1);
@@ -455,13 +465,6 @@ try {
                     }
                 }
             } else {
-                if (cloneVisual) {
-                    cloneVisual.remove();
-                    cloneVisual = null;
-                }
-
-                cartaArrastando.style.opacity = "1";
-
                 if (gameState && playerId) {
                     let indexEu = gameState.jogadores.findIndex(j => j.id === playerId);
                     if (indexEu > -1) {
@@ -469,9 +472,10 @@ try {
                             .map(c => c.dataset.idUnico)
                             .filter(id => id);
 
-                        gameState.jogadores[indexEu].mao.sort((a, b) => {
-                            return idsNaTela.indexOf(a.idUnico) - idsNaTela.indexOf(b.idUnico);
-                        });
+                        let maoAtual = gameState.jogadores[indexEu].mao;
+                        gameState.jogadores[indexEu].mao = idsNaTela.map(idUnico => 
+                            maoAtual.find(c => c.idUnico === idUnico)
+                        ).filter(c => c !== undefined);
 
                         selectedCardsIndices = [];
                         window.selectedCardsIndices = selectedCardsIndices;
@@ -484,6 +488,7 @@ try {
             }
 
             cartaArrastando = null;
+            IDUnicoArrastando = null;
             toqueMovido = false;
         };
 

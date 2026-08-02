@@ -10,12 +10,35 @@
             margin: 0;
             padding: 0;
             user-select: none;
+            -webkit-user-select: none;
+        }
+
+        @media screen and (orientation: portrait) {
+            body::before {
+                content: "Por favor, vire o celular na horizontal (modo deitado) 📱🔄";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #0d4a22;
+                color: #fff;
+                z-index: 99999;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                font-size: 1.2rem;
+                padding: 20px;
+                font-weight: bold;
+            }
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #0d4a22;
             color: #fff;
+            width: 100vw;
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -24,44 +47,39 @@
 
         header {
             background-color: rgba(0, 0, 0, 0.4);
-            padding: 10px 15px;
+            padding: 2px 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.9rem;
+            font-size: 0.7rem;
+            height: 24px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
         }
 
         .btn-acao {
             background-color: #27ae60;
             color: white;
             border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 5px 10px;
+            border-radius: 4px;
             font-weight: bold;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.65rem;
         }
 
-        .btn-acao:active {
-            opacity: 0.8;
-        }
-
-        .btn-vermelho {
-            background-color: #c0392b;
-        }
-
-        .btn-azul {
-            background-color: #2980b9;
-        }
+        .btn-acao:active { opacity: 0.8; }
+        .btn-vermelho { background-color: #c0392b; }
+        .btn-azul { background-color: #2980b9; }
 
         .mesa-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            padding: 10px;
+            justify-content: flex-start;
+            padding: 2px 8px;
             position: relative;
+            overflow: visible;
         }
 
         .topo-mesa {
@@ -74,205 +92,225 @@
         .info-jogadores {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 1px;
             max-width: 50%;
+            font-size: 0.6rem;
         }
 
         .centro-mesa {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 25px;
-            margin: auto 0;
+            gap: 35px;
+            margin: 0 auto;
         }
 
         .monte-bloco, .lixeira-bloco, .vira-bloco {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
-            font-size: 0.75rem;
+            gap: 1px;
+            font-size: 0.55rem;
         }
 
         .monte-cartas {
-            width: 75px;
-            height: 110px;
+            width: 44px;
+            height: 64px;
             background: #112233;
             border: 2px dashed rgba(255,255,255,0.4);
-            border-radius: 8px;
+            border-radius: 5px;
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: bold;
-            cursor: pointer;
             position: relative;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
         }
 
         .card {
-            width: 75px;
-            height: 110px;
+            width: 44px;
+            height: 64px;
             background: #fff;
-            border-radius: 8px;
+            border-radius: 5px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 6px;
+            padding: 3px;
             box-sizing: border-box;
             font-weight: bold;
             position: relative;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
             cursor: pointer;
             flex-shrink: 0;
+            font-size: 0.7rem;
+            touch-action: none;
+        }
+
+        #coringaPile .card {
+            width: 44px !important;
+            height: 64px !important;
+            margin: 0 auto;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            padding: 3px !important;
         }
 
         .card.red { color: #e74c3c; }
         .card.black { color: #2c3e50; }
 
         .card.selected {
-            transform: translateY(-12px);
-            box-shadow: 0 8px 15px rgba(241, 196, 15, 0.5);
+            transform: translateY(-32px);
+            box-shadow: 0 8px 16px rgba(241, 196, 15, 0.9);
             border: 2px solid #f1c40f !important;
+            z-index: 999;
         }
 
-        .card.movendo-origem {
-            opacity: 0.4;
-            border: 2px dashed #3498db !important;
+        .card-sendo-arrastada {
+            position: fixed !important;
+            z-index: 99999 !important;
+            pointer-events: none;
+            opacity: 0.9;
+            transform: scale(1.1) translateY(-25px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.6);
+            transition: none !important;
         }
 
         .coringa-badge {
             position: absolute;
-            top: -8px;
-            right: -8px;
+            top: -5px;
+            right: -5px;
             background: #f1c40f;
             color: #000;
-            font-size: 0.6rem;
-            padding: 2px 5px;
-            border-radius: 4px;
+            font-size: 0.45rem;
+            padding: 1px 2px;
+            border-radius: 2px;
             font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            z-index: 100;
         }
 
         .painel-controle-jogo {
-            background: rgba(0,0,0,0.5);
-            padding: 8px;
-            border-radius: 8px;
+            background: rgba(0,0,0,0.4);
+            padding: 1px 6px;
+            border-radius: 4px;
             display: flex;
-            flex-direction: column;
-            gap: 6px;
-            text-align: center;
-        }
-
-        .botoes-acao-mesa {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            margin-top: auto;
         }
 
         .mao-container {
-            background-color: rgba(0, 0, 0, 0.3);
-            padding: 10px;
-            border-radius: 10px 10px 0 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            padding: 6px 8px 6px 8px;
+            border-radius: 8px 8px 0 0;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 2px;
+            width: 100%;
+            flex-shrink: 0;
+            overflow: visible !important;
+        }
+
+        .linha-inferior-conteudo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            overflow: visible !important;
         }
 
         .mao-cartas {
             display: flex;
             gap: 6px;
             overflow-x: auto;
-            padding: 5px 2px 10px 2px;
-            min-height: 125px;
+            overflow-y: visible !important;
+            padding: 26px 4px 4px 4px;
+            min-height: 96px;
             align-items: center;
+            position: relative;
+            z-index: 50;
+            flex: 1;
         }
 
-        .mao-cartas::-webkit-scrollbar {
-            height: 6px;
+        .botoes-acao-mesa {
+            display: flex;
+            flex-direction: row;
+            gap: 6px;
+            align-items: center;
+            flex-shrink: 0;
         }
 
-        .mao-cartas::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.2);
-            border-radius: 3px;
-        }
+        .mao-cartas::-webkit-scrollbar { height: 3px; }
+        .mao-cartas::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
     </style>
 </head>
 <body>
 
     <header>
         <div id="roomDisplay" style="cursor: pointer;" title="Clique para copiar">Mesa: Carregando...</div>
-        <button id="leaveBtn" class="btn-acao btn-vermelho" style="padding: 5px 10px; font-size: 0.75rem;">Sair</button>
+        <button id="leaveBtn" class="btn-acao btn-vermelho" style="padding: 1px 4px; font-size: 0.55rem;">Sair</button>
     </header>
 
     <div class="mesa-container">
-        <!-- Topo: Informações dos Jogadores e Controles de Administrador -->
         <div class="topo-mesa">
-            <div id="playersArea" class="info-jogadores">
-                <!-- Preenchido via JS -->
-            </div>
-            
+            <div id="playersArea" class="info-jogadores"></div>
             <div id="adminControls" style="display: none;">
-                <button id="btnIniciarPartida" class="btn-acao" style="background-color: #f39c12; font-size: 0.8rem;">Iniciar Partida 🎮</button>
+                <button id="btnIniciarPartida" class="btn-acao" style="background-color: #f39c12; font-size: 0.55rem;">Iniciar Partida 🎮</button>
             </div>
         </div>
 
-        <!-- Centro: Monte, Vira e Lixeira -->
         <div class="centro-mesa">
             <div class="monte-bloco">
                 <div id="btnComprarMonte" class="monte-cartas" title="Comprar do Monte">
-                    <span style="font-size: 1.5rem;">🂠</span>
-                    <span id="deckCount" style="position: absolute; bottom: 5px; font-size: 0.7rem; background: rgba(0,0,0,0.6); padding: 1px 5px; border-radius: 4px;">0</span>
+                    <span style="font-size: 0.9rem;">🂠</span>
+                    <span id="deckCount" style="position: absolute; bottom: 2px; font-size: 0.5rem; background: rgba(0,0,0,0.6); padding: 1px 3px; border-radius: 2px; color: #fff;">0</span>
                 </div>
                 <span>Monte</span>
             </div>
 
             <div class="vira-bloco">
-                <div id="coringaPile">
-                    <!-- Carta Vira -->
-                </div>
+                <div id="coringaPile"></div>
                 <span id="coringaTexto">Coringa: -</span>
             </div>
 
             <div class="lixeira-bloco">
-                <div id="discardPile" class="monte-cartas" style="background: rgba(255,255,255,0.05); border-style: solid;">
-                    <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem; text-align:center;">Vazio</div>
+                <div id="discardPile" class="monte-cartas" style="background: #fff; border-style: solid; border-color: #ccc;">
+                    <div style="color: rgba(0,0,0,0.4); font-size: 0.5rem; text-align:center;">Vazio</div>
                 </div>
                 <span>Lixeira</span>
             </div>
         </div>
+    </div>
 
-        <!-- Painel de Turno e Mensagens -->
-        <div class="painel-controle-jogo">
-            <div id="statusTurno" style="font-size: 0.85rem; font-weight: bold; color: #f1c40f;">Carregando jogo...</div>
+    <div class="painel-controle-jogo">
+        <div id="statusTurno" style="font-size: 0.6rem; font-weight: bold; color: #f1c40f; padding: 2px 0;">Carregando jogo...</div>
+    </div>
+
+    <div class="mao-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.5rem;">
+            <span id="infoReordenar" style="color: rgba(255,255,255,0.8);">1 toque seleciona • Arraste para reorganizar</span>
+        </div>
+        <div class="linha-inferior-conteudo">
+            <div id="playerHand" class="mao-cartas"></div>
             <div class="botoes-acao-mesa">
-                <button id="btnMarcarGrupo" class="btn-acao btn-azul" style="font-size: 0.75rem; padding: 6px 10px;">Baixar Grupo</button>
-                <button id="btnBater" class="btn-acao" style="background-color: #8e44ad; font-size: 0.75rem; padding: 6px 10px;">Bater 🏆</button>
-                <button id="btnDescartar" class="btn-acao btn-vermelho" style="font-size: 0.75rem; padding: 6px 10px;">Descartar</button>
+                <button id="btnMarcarGrupo" class="btn-acao btn-azul">Baixar Grupo</button>
+                <button id="btnBater" class="btn-acao" style="background-color: #8e44ad;">Bater 🏆</button>
+                <button id="btnDescartar" class="btn-acao btn-vermelho">Descartar</button>
             </div>
         </div>
     </div>
 
-    <!-- Área da Mão do Jogador -->
-    <div class="mao-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
-            <span id="infoReordenar" style="color: rgba(255,255,255,0.7);">Toque para selecionar. Dê duplo clique para reorganizar</span>
-            <button id="btnCancelarMovimento" class="btn-acao btn-vermelho" style="display: none; padding: 2px 8px; font-size: 0.7rem;">Cancelar</button>
-        </div>
-        <div id="playerHand" class="mao-cartas">
-            <!-- Cartas do Jogador -->
-        </div>
-    </div>
-
-    <!-- Modal de Vitória -->
     <div id="modalVitoria" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; text-align: center; color: #fff; padding: 20px;">
-        <div style="font-size: 5rem; margin-bottom: 10px;">🏆</div>
-        <h1 id="vencedorTexto" style="font-size: 1.8rem; color: #f1c40f; margin-bottom: 15px;">Jogador Venceu!</h1>
-        <p style="font-size: 1rem; color: #ccc;">A mesa será reiniciada em instantes...</p>
+        <div style="font-size: 3rem; margin-bottom: 5px;">🏆</div>
+        <h1 id="vencedorTexto" style="font-size: 1.2rem; color: #f1c40f; margin-bottom: 6px;">Jogador Venceu!</h1>
+        <p style="font-size: 0.75rem; color: #ccc;">A mesa será reiniciada em instantes...</p>
     </div>
 
-    <!-- Script principal do jogo -->
+    <!-- Apenas a importação do script principal do jogo -->
     <script type="module" src="js/game.js"></script>
 </body>
 </html>

@@ -23,7 +23,7 @@
             <button id="btnIniciarPartida" class="btn primary" style="padding: 8px 16px; font-size: 0.9rem;">Iniciar Partida</button>
         </div>
 
-        <!-- Área Central da Mesa (Monte, Lixeira e Coringa) -->
+        <!-- Área Central da Mesa (Monte, Coringa/Vira e Lixeira) -->
         <div class="table-center" style="align-items: center;">
             <div id="deckPile" class="card-pile">
                 <div class="card back">Monte</div>
@@ -55,6 +55,7 @@
             <div class="actions-area" style="flex-wrap: wrap;">
                 <button id="btnComprarMonte" class="btn action" disabled>Comprar Monte</button>
                 <button id="btnComprarLixeira" class="btn action" disabled>Pegar Lixeira</button>
+                <button id="btnMarcarGrupo" class="btn action secondary" disabled style="display: none;">Marcar Jogo</button>
                 <button id="btnDescartar" class="btn action danger" disabled>Descartar</button>
                 <button id="btnBater" class="btn action primary" disabled style="width: 100%; display: none;">🏆 Bater / Fechar Jogo</button>
             </div>

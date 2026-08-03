@@ -104,6 +104,13 @@ try {
         window.gameState = gameState;
         window.playerId = playerId;
 
+        if (gameState.jogadores && gameState.jogadores.length > 0) {
+            const turnoExiste = gameState.jogadores.some(j => j.id === gameState.turno);
+            if (!turnoExiste && gameState.jogadores[0].id) {
+                updateDoc(roomRef, { turno: gameState.jogadores[0].id, faseTurno: 'comprar' });
+            }
+        }
+
         if (gameState.status === 'desconectada') {
             alert("Um jogador saiu da partida. A sala foi fechada.");
             window.location.href = 'index.html';
@@ -314,7 +321,7 @@ try {
 
                         let grupoIndex = -1;
                         if (eu.gruposBaixados) {
-                            grupoIndex = eu.gruposBaixados.findIndex(g => g.ids.includes(carta.idUnico));
+                            grupoIndex = eu.gruposBaixados.findIndex(g => g.indices && g.indices.includes(index));
                         }
 
                         if (grupoIndex > -1) {
@@ -368,7 +375,6 @@ try {
         let toqueMovido = false;
         let toqueInicioX = 0;
         let toqueInicioY = 0;
-        let IDUnicoArrastando = null;
 
         handContainer.addEventListener("touchstart", (e) => {
             if (cartaArrastando) return;
@@ -385,7 +391,6 @@ try {
             if (indexOrigem === -1) return;
 
             cartaArrastando = cardEl;
-            IDUnicoArrastando = cardEl.dataset.idUnico;
         }, { passive: true });
 
         handContainer.addEventListener("touchmove", (e) => {
@@ -455,27 +460,41 @@ try {
                     const indexCard = cartasNaMão.indexOf(cartaArrastando);
 
                     if (indexCard > -1) {
-                        cartaArrastando.classList.toggle("selected");
-                        const pos = selectedCardsIndices.indexOf(indexCard);
-                        if (pos > -1) {
-                            selectedCardsIndices.splice(pos, 1);
-                        } else {
-                            selectedCardsIndices.push(indexCard);
-                        }
+                        cardIsSelected(indexCard, cartaArrastando);
                     }
                 }
             } else {
                 if (gameState && playerId) {
                     let indexEu = gameState.jogadores.findIndex(j => j.id === playerId);
                     if (indexEu > -1) {
-                        const idsNaTela = Array.from(handContainer.querySelectorAll(".card"))
-                            .map(c => c.dataset.idUnico)
-                            .filter(id => id);
+                        const idsNaTelaVistos = new Set();
+                        const idsNaTela = [];
+                        
+                        Array.from(handContainer.querySelectorAll(".card:not(.card-sendo-arrastada)"))
+                            .forEach(c => {
+                                const idU = c.dataset.idUnico;
+                                if (idU && !idsNaTelaVistos.has(idU)) {
+                                    idsNaTelaVistos.add(idU);
+                                    idsNaTela.push(idU);
+                                }
+                            });
 
-                        let maoAtual = gameState.jogadores[indexEu].mao;
-                        gameState.jogadores[indexEu].mao = idsNaTela.map(idUnico => 
-                            maoAtual.find(c => c.idUnico === idUnico)
+                        let maoAntiga = gameState.jogadores[indexEu].mao;
+                        
+                        let novaMao = idsNaTela.map(idUnico => 
+                            maoAntiga.find(c => c.idUnico === idUnico)
                         ).filter(c => c !== undefined);
+
+                        // Atualiza dinamicamente os índices dos grupos baixados para acompanharem as cartas movidas
+                        if (gameState.jogadores[indexEu].gruposBaixados) {
+                            gameState.jogadores[indexEu].gruposBaixados = gameState.jogadores[indexEu].gruposBaixados.map(grupo => {
+                                const idsDoGrupo = grupo.indices.map(idxAntigo => maoAntiga[idxAntigo]?.idUnico).filter(Boolean);
+                                const novosIndices = idsDoGrupo.map(idUnico => novaMao.findIndex(c => c.idUnico === idUnico)).filter(idx => idx !== -1);
+                                return { indices: novosIndices };
+                            });
+                        }
+
+                        gameState.jogadores[indexEu].mao = novaMao;
 
                         selectedCardsIndices = [];
                         window.selectedCardsIndices = selectedCardsIndices;
@@ -488,12 +507,21 @@ try {
             }
 
             cartaArrastando = null;
-            IDUnicoArrastando = null;
             toqueMovido = false;
         };
 
         window.addEventListener("touchend", finalizarArrasto);
         window.addEventListener("touchcancel", finalizarArrasto);
+
+        function cardIsSelected(indexCard, cardEl) {
+            cardEl.classList.toggle("selected");
+            const pos = selectedCardsIndices.indexOf(indexCard);
+            if (pos > -1) {
+                selectedCardsIndices.splice(pos, 1);
+            } else {
+                selectedCardsIndices.push(indexCard);
+            }
+        }
 
         function atualizarPosicaoClone(x, y) {
             if (!cloneVisual) return;
@@ -624,6 +652,13 @@ try {
     function validarGrupo(cartas, coringaStr) {
         if (cartas.length < 3) return false;
 
+        const idsUnicosVerificacao = new Set();
+        for (let c of cartas) {
+            let chave = c.idUnico;
+            if (idsUnicosVerificacao.has(chave)) return false;
+            idsUnicosVerificacao.add(chave);
+        }
+
         let totalCoringas = cartas.filter(c => c.valor === coringaStr).length;
         let cartasNormais = cartas.filter(c => c.valor !== coringaStr);
 
@@ -631,7 +666,12 @@ try {
 
         let primeiroValorNormal = cartasNormais[0].valor;
         let ehTrincaPotencial = cartasNormais.every(c => c.valor === primeiroValorNormal);
-        if (ehTrincaPotencial) return true;
+        if (ehTrincaPotencial) {
+            let naipesNormais = cartasNormais.map(c => c.naipe);
+            let naipesUnicos = new Set(naipesNormais);
+            if (naipesUnicos.size !== cartasNormais.length) return false;
+            return (cartasNormais.length + totalCoringas) >= 3;
+        }
 
         let naipeRef = cartasNormais[0].naipe;
         let mesmoNaipe = cartasNormais.every(c => c.naipe === naipeRef);
@@ -661,14 +701,13 @@ try {
         let cartasSelecionadas = selectedCardsIndices.map(idx => eu.mao[idx]);
 
         if (!validarGrupo(cartasSelecionadas, coringaStr)) {
-            alert("Este grupo é inválido! Verifique trincas ou sequências.");
+            alert("Este grupo é inválido! Verifique se há cartas repetidas ou se a sequência/trinca está correta.");
             return;
         }
 
         if (!eu.gruposBaixados) eu.gruposBaixados = [];
         
-        let idsUnicosGrupo = cartasSelecionadas.map(c => c.idUnico);
-        eu.gruposBaixados.push({ ids: idsUnicosGrupo });
+        eu.gruposBaixados.push({ indices: [...selectedCardsIndices] });
 
         selectedCardsIndices = [];
         window.selectedCardsIndices = selectedCardsIndices;
@@ -690,10 +729,10 @@ try {
             return;
         }
 
-        let idsAgrupados = [];
-        eu.gruposBaixados.forEach(g => { idsAgrupados.push(...g.ids); });
+        let indicesAgrupados = [];
+        eu.gruposBaixados.forEach(g => { indicesAgrupados.push(...g.indices); });
 
-        let cartasForaDosGrupos = eu.mao.filter(c => !idsAgrupados.includes(c.idUnico));
+        let cartasForaDosGrupos = eu.mao.map((_, i) => i).filter(i => !indicesAgrupados.includes(i));
 
         if (cartasForaDosGrupos.length > 1) {
             alert("Para bater, todas as suas cartas precisam estar agrupadas (exceto o descarte final).");
@@ -730,9 +769,9 @@ try {
 
         if (eu.gruposBaixados) {
             eu.gruposBaixados = eu.gruposBaixados.map(g => {
-                g.ids = g.ids.filter(id => id !== cartaDescartada.idUnico);
+                g.indices = g.indices.filter(idx => idx !== indiceDescarte).map(idx => idx > indiceDescarte ? idx - 1 : idx);
                 return g;
-            }).filter(g => g.ids.length >= 3);
+            }).filter(g => g.indices.length >= 3);
         }
 
         eu.mao.splice(indiceDescarte, 1);

@@ -1,0 +1,281 @@
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    user-select: none; 
+    -webkit-user-select: none; 
+    -webkit-tap-highlight-color: transparent;
+}
+
+body { 
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+    background: radial-gradient(circle at center, #0f381e 0%, #05160b 100%); 
+    color: #f8f9fa; 
+    width: 100vw; 
+    height: 100dvh; 
+    display: flex; 
+    flex-direction: column; 
+    overflow: hidden; 
+}
+
+header { 
+    background: rgba(15, 23, 42, 0.75); 
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 6px 14px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    font-size: 0.7rem; 
+    height: 42px; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08); 
+    flex-shrink: 0; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.sala-info-container { display: flex; align-items: center; gap: 8px; }
+
+.btn-copiar-sala { 
+    background: linear-gradient(135deg, #f1c40f, #d4ac0d); 
+    color: #111; 
+    border: none; 
+    padding: 3px 7px; 
+    border-radius: 6px; 
+    font-size: 0.55rem; 
+    font-weight: 700; 
+    cursor: pointer; 
+    box-shadow: 0 2px 5px rgba(241, 196, 15, 0.3);
+    transition: all 0.2s ease;
+}
+.btn-copiar-sala:active { transform: scale(0.95); }
+
+.btn-acao { 
+    background: linear-gradient(135deg, #2ecc71, #27ae60); 
+    color: white; 
+    border: none; 
+    padding: 6px 12px; 
+    border-radius: 8px; 
+    font-weight: 700; 
+    cursor: pointer; 
+    font-size: 0.7rem; 
+    box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+.btn-acao:active { transform: scale(0.95); filter: brightness(0.9); }
+.btn-vermelho { 
+    background: linear-gradient(135deg, #e74c3c, #c0392b); 
+    box-shadow: 0 4px 10px rgba(192, 57, 43, 0.3);
+}
+.btn-azul { 
+    background: linear-gradient(135deg, #3498db, #2980b9); 
+    box-shadow: 0 4px 10px rgba(41, 128, 185, 0.3);
+}
+
+.mesa-container { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between; 
+    padding: 8px; 
+    position: relative; 
+    min-height: 0; 
+}
+
+.topo-mesa { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; flex-shrink: 0; }
+
+.info-jogadores { display: flex; gap: 6px; flex-wrap: wrap; max-width: 75%; }
+
+.oponente-card-box { 
+    background: rgba(15, 23, 42, 0.6); 
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 4px 8px; 
+    border-radius: 8px; 
+    font-size: 0.55rem; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    border: 1px solid rgba(255, 255, 255, 0.08); 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+.oponente-card-box.ativo { 
+    border-color: #f1c40f; 
+    background: rgba(241, 196, 15, 0.12);
+    box-shadow: 0 0 12px rgba(241, 196, 15, 0.4); 
+}
+.oponente-cartas-verso { display: flex; gap: 2px; margin-top: 3px; }
+.mini-verso { 
+    width: 6px; height: 11px; 
+    background: linear-gradient(135deg, #3498db, #1b4f72); 
+    border-radius: 2px; 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.centro-mesa { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    gap: 16px; 
+    margin: auto; 
+    background: rgba(10, 20, 15, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 12px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.monte-bloco, .lixeira-bloco, .vira-bloco { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.6rem; color: #cbd5e1; font-weight: 500; }
+
+.card { 
+    width: 52px; height: 78px; 
+    background: #ffffff; 
+    color: #1e293b;
+    border-radius: 8px; 
+    display: flex; flex-direction: column; justify-content: space-between; padding: 4px 5px; 
+    box-sizing: border-box; font-weight: 800; position: relative; 
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.15); 
+    cursor: grab; 
+    flex-shrink: 0; 
+    font-size: 0.75rem; 
+    touch-action: pan-x; 
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+.card:active { cursor: grabbing; }
+.card.red { color: #d63031; }
+.card.black { color: #2d3436; }
+
+/* Estilização interna da carta aprimorada com símbolo central grande */
+.card-top { display: flex; flex-direction: column; line-height: 0.9; }
+.card-center { 
+    position: absolute; 
+    top: 50%; left: 50%; 
+    transform: translate(-50%, -50%); 
+    font-size: 1.5rem; 
+    opacity: 0.95; 
+}
+.card-bottom { display: flex; flex-direction: column; align-items: flex-end; line-height: 0.9; transform: rotate(180deg); }
+
+.mao-cartas .card {
+    margin-left: -12px;
+    box-shadow: -2px 5px 10px rgba(0,0,0,0.3);
+    z-index: var(--card-index, 1);
+}
+.mao-cartas .card:first-child {
+    margin-left: 0;
+}
+
+.mao-cartas .card:hover {
+    z-index: 99 !important;
+}
+
+.card.selected { 
+    transform: translateY(-22px) scale(1.06) !important; 
+    box-shadow: 0 16px 30px rgba(241, 196, 15, 0.5), 0 0 0 2.5px #f1c40f !important; 
+    z-index: 100 !important;
+}
+
+.card.dragging { 
+    opacity: 1 !important; 
+    transform: scale(1.15) rotate(4deg) !important; 
+    box-shadow: 0 22px 45px rgba(0, 0, 0, 0.5) !important; 
+    z-index: 99999 !important; 
+    transition: none !important; 
+    pointer-events: none;
+    background: #ffffff !important;
+}
+
+.card-placeholder { 
+    width: 52px; height: 78px; 
+    border: 2px dashed #f1c40f; 
+    border-radius: 8px; 
+    background: rgba(241, 196, 15, 0.15); 
+    flex-shrink: 0; 
+    margin-left: 6px;
+}
+
+.monte-cartas { 
+    width: 52px; height: 78px; 
+    background: #ffffff; 
+    border: 1.5px solid rgba(0,0,0,0.15); 
+    border-radius: 8px; 
+    display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; 
+    padding: 4px 5px;
+    font-weight: 800; position: relative; 
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3); 
+    cursor: pointer; 
+    transition: filter 0.2s ease, transform 0.2s ease;
+    font-size: 0.75rem;
+    color: #1e293b;
+}
+
+#btnComprarMonte {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #fff;
+    justify-content: center;
+    align-items: center;
+    border: 1.5px dashed rgba(255,255,255,0.3);
+}
+
+.monte-cartas:hover { filter: brightness(1.05); transform: translateY(-2px); }
+
+.coringa-badge { 
+    background: linear-gradient(135deg, #f1c40f, #d4ac0d); 
+    color: #111; font-weight: 700; 
+    padding: 2px 6px; border-radius: 4px; font-size: 0.55rem; 
+    box-shadow: 0 2px 5px rgba(241, 196, 15, 0.3);
+}
+
+.painel-controle-jogo { 
+    background: rgba(15, 23, 42, 0.5); 
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 6px 12px; 
+    border-radius: 8px; 
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.meu-perfil-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(15, 23, 42, 0.7); padding: 6px 12px; border-radius: 8px;
+    font-size: 0.7rem; color: #f1c40f; font-weight: 700; margin-bottom: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mao-container { 
+    background: rgba(10, 15, 25, 0.92); 
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 12px 14px 14px 14px; 
+    border-radius: 18px 18px 0 0; 
+    display: flex; flex-direction: column; width: 100%; 
+    flex-shrink: 0; 
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.6);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.mao-cartas { 
+    display: flex; 
+    overflow-x: auto; 
+    overflow-y: hidden;
+    padding: 12px 14px 12px 14px; 
+    min-height: 125px; 
+    align-items: center; 
+    position: relative; 
+    z-index: 50; 
+    flex: 1; 
+    cursor: grab; 
+    
+    scrollbar-width: none; 
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mao-cartas:active { cursor: grabbing; }
+.mao-cartas::-webkit-scrollbar { display: none; }
+
+.botoes-acao-mesa { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 8px; }
+.opcoes-admin { display: flex; flex-direction: column; align-items: flex-end; }

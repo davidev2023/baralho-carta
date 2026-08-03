@@ -1,51 +1,52 @@
-import { db } from './firebase.js';
-import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+document.addEventListener('DOMContentLoaded', () => {
+    const inputNome = document.getElementById('inputNome');
+    const inputCodigoSala = document.getElementById('inputCodigoSala');
+    const btnCriar = document.getElementById('btnCriarSala');
+    const btnEntrar = document.getElementById('btnEntrarSala');
 
-document.getElementById('createRoomBtn')?.addEventListener('click', async () => {
-    const playerName = document.getElementById('playerName').value.trim();
-    if (!playerName) {
-        alert("Digite seu apelido antes de criar a mesa!");
-        return;
+    let idUsuario = sessionStorage.getItem('cacheta_user_id');
+    if (!idUsuario) {
+        idUsuario = 'user_' + Math.floor(Math.random() * 100000);
+        sessionStorage.setItem('cacheta_user_id', idUsuario);
     }
 
-    try {
-        const docRef = await addDoc(collection(db, "mesas"), {
-            criador: playerName,
-            status: 'aguardando',
-            jogadores: [
-                { id: 'p1', nome: playerName, mao: [] },
-                { id: 'p_bot_1', nome: 'Robô Ágil', mao: [] }
-            ],
-            turno: 'p1',
-            faseTurno: 'comprar',
-            monte: [],
-            lixeira: [],
-            vira: null
+    if (btnCriar) {
+        btnCriar.addEventListener('click', () => {
+            const nome = inputNome ? inputNome.value.trim() : "";
+            if (!nome) {
+                alert("Por favor, digite seu nome!");
+                if (inputNome) inputNome.focus();
+                return;
+            }
+
+            sessionStorage.setItem('cacheta_user_name', nome);
+            const novoIdSala = 'SALA_' + Math.floor(1000 + Math.random() * 9000);
+            sessionStorage.setItem('cacheta_sala_id', novoIdSala);
+
+            window.location.href = `jogo.html?sala=${novoIdSala}`;
         });
-
-        localStorage.setItem('cacheta_roomId', docRef.id);
-        localStorage.setItem('cacheta_playerId', 'p1');
-        localStorage.setItem('cacheta_playerName', playerName);
-
-        window.location.href = `jogo.html?room=${docRef.id}`;
-    } catch (e) {
-        console.error("Erro ao criar mesa: ", e);
-        alert("Erro ao criar mesa. Verifique sua conexão com o Firebase.");
-    }
-});
-
-document.getElementById('joinRoomBtn')?.addEventListener('click', () => {
-    const playerName = document.getElementById('playerName').value.trim();
-    const roomCode = document.getElementById('roomCode').value.trim();
-
-    if (!playerName || !roomCode) {
-        alert("Preencha seu apelido e o código da mesa!");
-        return;
     }
 
-    localStorage.setItem('cacheta_roomId', roomCode);
-    localStorage.setItem('cacheta_playerId', 'p2');
-    localStorage.setItem('cacheta_playerName', playerName);
+    if (btnEntrar) {
+        btnEntrar.addEventListener('click', () => {
+            const nome = inputNome ? inputNome.value.trim() : "";
+            const codigoSala = inputCodigoSala ? inputCodigoSala.value.trim().toUpperCase() : "";
 
-    window.location.href = `jogo.html?room=${roomCode}`;
+            if (!nome) {
+                alert("Por favor, digite seu nome!");
+                if (inputNome) inputNome.focus();
+                return;
+            }
+            if (!codigoSala) {
+                alert("Por favor, digite o código da mesa!");
+                if (inputCodigoSala) inputCodigoSala.focus();
+                return;
+            }
+
+            sessionStorage.setItem('cacheta_user_name', nome);
+            sessionStorage.setItem('cacheta_sala_id', codigoSala);
+
+            window.location.href = `jogo.html?sala=${codigoSala}`;
+        });
+    }
 });

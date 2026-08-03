@@ -1,5 +1,15 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { 
+  getFirestore, 
+  doc, 
+  setDoc,
+  getDoc,
+  updateDoc,
+  arrayUnion, 
+  arrayRemove,
+  runTransaction, 
+  onSnapshot 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyADMDjQpxgJ9eRVYQTeOuqkCW5s4ZjgzY4",
@@ -11,4 +21,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+const db = getFirestore(app);
+
+// EXPORTAÇÕES PARA O JOGO USAR
+export { db, doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove, runTransaction, onSnapshot };

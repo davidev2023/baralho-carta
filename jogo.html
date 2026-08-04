@@ -7,7 +7,6 @@
     <!-- CSS Externo separado -->
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Estilo melhorado para destacar os grupos baixados na mão */
         .card.grupo-baixado {
             border: 3px solid var(--cor-grupo, #3498db) !important;
             box-shadow: 0 0 10px var(--cor-grupo, #3498db);
@@ -50,7 +49,6 @@
             </div>
 
             <div class="lixeira-bloco">
-                <!-- Lixeira com estilo de carta normal idêntico às demais -->
                 <div id="discardPile" class="monte-cartas" style="background: #fff; border: 1px solid #ccc;">
                     <div style="color: rgba(0,0,0,0.4); font-size: 0.4rem; text-align:center;">Vazio</div>
                 </div>
@@ -66,7 +64,7 @@
     <div class="mao-container">
         <div class="meu-perfil-bar">
             <span>👤 <span id="lblNomeJogador">Jogador</span></span>
-            <span style="color: #2ecc71;">Pontos: <span id="lblPontosJogador">100</span></span>
+            <span style="color: #2ecc71;">Pontos: <span id="lblPontosJogador">0</span></span>
             <span id="infoGrupos" style="color: #3498db;">Baixados: 0</span>
         </div>
 
@@ -80,13 +78,15 @@
     </div>
 
     <script type="module">
-        import { db, doc, setDoc, getDoc, updateDoc, onSnapshot } from './js/firebase.js';
         import { 
-            gerarBaralho, 
-            calcularCoringa, 
+            entrarNaSala, 
             escutarAtualizacoesPartida, 
             comprarCarta, 
             descartarCarta, 
+            iniciarPartida, 
+            baterJogo, 
+            validarTrincaOuSequencia,
+            sairDaSala,
             inicializarSistemaPresenca 
         } from './js/game.js';
 
@@ -118,15 +118,12 @@
         let gruposMarcados = [];
         let ordemLocalMao = [];
         
-        // Cores diferenciadas: grupos de 3 vs grupos de 4 ou mais cartas (mudam de cor)
-        const CORES_TRINCA_PADRAO = ['#2980b9', '#8e44ad', '#2ecc71', '#d35400']; // Para 3 cartas
-        const CORES_GRUPO_GRANDE = ['#f1c40f', '#e84393', '#e67e22', '#1abc9c']; // Para 4+ cartas
+        const CORES_TRINCA_PADRAO = ['#2980b9', '#8e44ad', '#2ecc71', '#d35400'];
+        const CORES_GRUPO_GRANDE = ['#f1c40f', '#e84393', '#e67e22', '#1abc9c'];
 
         let isDragging = false;
         let placeholder = null;
         let lastTargetIndex = -1;
-
-        const roomRef = doc(db, 'salas', idSala);
 
         const maoCartasEl = document.getElementById('playerHand');
         let isMouseDown = false;
@@ -180,38 +177,11 @@
             }, { passive: true });
         }
 
-        async function entrarNaSala() {
-            const docSnap = await getDoc(roomRef);
-            if (!docSnap.exists()) {
-                await setDoc(roomRef, {
-                    criador: idUsuario,
-                    emAndamento: false,
-                    faseTurno: 'COMPRAR',
-                    vezDoJogadorId: idUsuario,
-                    baralho: [],
-                    lixo: [],
-                    vira: null,
-                    coringa: null,
-                    jogadores: [{ id: idUsuario, nome: nomeSalvo, mao: [], pontos: 100, status: 'online' }]
-                });
-            } else {
-                let dados = docSnap.data();
-                let jogadorExistente = dados.jogadores.find(j => j.id === idUsuario);
-                
-                if (!jogadorExistente && !dados.emAndamento) {
-                    dados.jogadores.push({ id: idUsuario, nome: nomeSalvo, mao: [], pontos: 100, status: 'online' });
-                    await updateDoc(roomRef, { jogadores: dados.jogadores });
-                } else if (jogadorExistente && jogadorExistente.nome !== nomeSalvo) {
-                    jogadorExistente.nome = nomeSalvo;
-                    await updateDoc(roomRef, { jogadores: dados.jogadores });
-                }
-            }
-        }
-
-        entrarNaSala();
+        // Inicializa sala e presença
+        entrarNaSala(idSala, idUsuario, nomeSalvo).catch(err => console.error(err));
         inicializarSistemaPresenca(idSala, idUsuario);
 
-        escutarAtualizacoesPartida(idSala, idUsuario, (dados) => {
+        escutarAtualizacoesPartida(idSala, (dados) => {
             estadoJogo = dados;
 
             if (estadoJogo.criador === idUsuario && !estadoJogo.emAndamento) {
@@ -292,10 +262,18 @@
                 });
 
                 const meuJogador = estadoJogo.jogadores.find(j => j.id === idUsuario);
-                if (meuJogador && Array.isArray(meuJogador.mao)) {
-                    sincronizarOrdemLocal(meuJogador.mao);
-                    renderizarMaoLocal();
+                if (meuJogador) {
+                    document.getElementById('lblPontosJogador').innerText = meuJogador.pontos ?? 0;
+                    if (Array.isArray(meuJogador.mao)) {
+                        sincronizarOrdemLocal(meuJogador.mao);
+                        renderizarMaoLocal();
+                    }
                 }
+            }
+
+            // Exibir vencedor se houver
+            if (estadoJogo.vencedor && estadoJogo.vencedor.nome) {
+                console.log("Vencedor da última rodada:", estadoJogo.vencedor);
             }
         }
 
@@ -483,71 +461,13 @@
             el.addEventListener('mousedown', onStart);
         }
 
-        function validarTrincaOuSequencia(cartas) {
-            if (cartas.length < 3) return false;
-
-            const coringaValor = estadoJogo.coringa;
-            const coringas = cartas.filter(c => c.valor === coringaValor);
-            const normais = cartas.filter(c => c.valor !== coringaValor);
-
-            if (normais.length > 0) {
-                const primeiroValor = normais[0].valor;
-                const mesmoValor = normais.every(c => c.valor === primeiroValor);
-                if (mesmoValor) {
-                    const naipesSet = new Set(normais.map(c => c.naipe));
-                    if (naipesSet.size === normais.length && cartas.length <= 4) {
-                        return true;
-                    }
-                }
-            } else {
-                if (cartas.length <= 4) return true;
-            }
-
-            if (normais.length > 0) {
-                const primeiroNaipe = normais[0].naipe;
-                const mesmoNaipe = normais.every(c => c.naipe === primeiroNaipe);
-                
-                if (mesmoNaipe) {
-                    const ordemValores = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
-                    
-                    let minVal = Math.min(...normais.map(c => ordemValores[c.valor]));
-                    let maxVal = Math.max(...normais.map(c => ordemValores[c.valor]));
-                    
-                    const amplitude = maxVal - minVal + 1;
-                    if (amplitude <= cartas.length && (maxVal - minVal < 13)) {
-                        const valoresNormaisUnicos = new Set(normais.map(c => c.valor));
-                        if (valoresNormaisUnicos.size === normais.length) {
-                            return true;
-                        }
-                    }
-                }
-            } else if (cartas.length >= 3) {
-                return true;
-            }
-
-            return false;
-        }
-
         document.getElementById('btnIniciarPartida').addEventListener('click', async () => {
-            let listaJogadores = [...estadoJogo.jogadores];
-            const baralho = gerarBaralho();
-
-            listaJogadores.forEach(j => j.mao = baralho.splice(0, 9));
-            const vira = baralho.pop();
-            const coringa = calcularCoringa(vira);
-
-            gruposMarcados = [];
-
-            await updateDoc(roomRef, {
-                emAndamento: true,
-                faseTurno: 'COMPRAR',
-                vezDoJogadorId: listaJogadores[0].id,
-                baralho: baralho,
-                lixo: [],
-                vira: vira,
-                coringa: coringa,
-                jogadores: listaJogadores
-            });
+            try {
+                gruposMarcados = [];
+                await iniciarPartida(idSala);
+            } catch (err) {
+                alert(err.message);
+            }
         });
 
         document.getElementById('btnComprarMonte').addEventListener('click', async () => {
@@ -572,7 +492,7 @@
             
             const cartasParaMarcar = ordemLocalMao.filter(c => cartasSelecionadasIds.includes(c.idUnico));
 
-            if (!validarTrincaOuSequencia(cartasParaMarcar)) {
+            if (!validarTrincaOuSequencia(cartasParaMarcar, estadoJogo.coringa)) {
                 return alert("❌ Jogo inválido! O grupo selecionado precisa ser estritamente uma Trinca ou uma Sequência válida, considerando os coringas.");
             }
 
@@ -581,7 +501,6 @@
             renderizarMaoLocal();
         });
 
-        // Botão Bater corrigido e funcional
         document.getElementById('btnBater').addEventListener('click', async () => {
             if (gruposMarcados.length === 0) {
                 return alert("Você precisa baixar pelo menos um jogo/grupo antes de poder bater!");
@@ -599,34 +518,18 @@
             }
 
             try {
-                let jogadoresAtualizados = estadoJogo.jogadores.map(j => {
-                    if (j.id === idUsuario) {
-                        return { ...j, pontos: j.pontos + 50 };
-                    }
-                    return j;
-                });
-
-                await updateDoc(roomRef, {
-                    emAndamento: false,
-                    jogadores: jogadoresAtualizados
-                });
-
+                await baterJogo(gruposMarcados, ordemLocalMao);
                 alert(`🏆 PARABÉNS ${nomeSalvo.toUpperCase()}! VOCÊ BATEU O JOGO E VENCEU A PARTIDA! 🏆`);
             } catch (err) {
                 console.error("Erro ao registrar vitória:", err);
-                alert("Erro ao tentar bater. Tente novamente.");
+                alert(err.message || "Erro ao tentar bater. Tente novamente.");
             }
         });
 
         document.getElementById('leaveBtn').addEventListener('click', async () => {
             if (confirm("Deseja sair da sala?")) {
                 try {
-                    const docSnap = await getDoc(roomRef);
-                    if (docSnap.exists()) {
-                        let dados = docSnap.data();
-                        let jogadoresAtualizados = dados.jogadores.filter(j => j.id !== idUsuario);
-                        await updateDoc(roomRef, { jogadores: jogadoresAtualizados });
-                    }
+                    await sairDaSala(idSala, idUsuario);
                 } catch (e) { console.error(e); }
                 sessionStorage.removeItem('cacheta_sala_id');
                 window.location.href = 'index.html';

@@ -32,6 +32,11 @@
             </div>
         </div>
 
+        <!-- Banner de Vencedor em Tempo Real para Todos -->
+        <div id="painelVencedor" style="display: none; background: rgba(231, 76, 60, 0.95); color: white; padding: 8px; text-align: center; font-weight: bold; font-size: 0.65rem; border-radius: 4px; margin: 5px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+            🏆 <span id="textoVencedor"></span> 🏆
+        </div>
+
         <div class="centro-mesa">
             <div class="monte-bloco">
                 <div id="btnComprarMonte" class="monte-cartas" title="Comprar do Monte">
@@ -177,7 +182,6 @@
             }, { passive: true });
         }
 
-        // Inicializa sala e presença
         entrarNaSala(idSala, idUsuario, nomeSalvo).catch(err => console.error(err));
         inicializarSistemaPresenca(idSala, idUsuario);
 
@@ -200,18 +204,30 @@
 
         function renderizarInterface() {
             const statusEl = document.getElementById('statusTurno');
-            
-            if (!estadoJogo.emAndamento) {
-                const qtdPessoas = estadoJogo.jogadores ? estadoJogo.jogadores.length : 0;
-                statusEl.innerText = `Aguardando jogadores (${qtdPessoas} na sala)...`;
+            const painelVencedorEl = document.getElementById('painelVencedor');
+            const textoVencedorEl = document.getElementById('textoVencedor');
+
+            // Renderização do Banner de Vencedor em Tempo Real para Todos
+            if (estadoJogo.vencedor && estadoJogo.vencedor.nome) {
+                painelVencedorEl.style.display = 'block';
+                textoVencedorEl.innerText = `${estadoJogo.vencedor.nome.toUpperCase()} BATEU E VENCEU A RODADA! (+50 pts)`;
+                statusEl.innerText = `Partida encerrada. Vencedor: ${estadoJogo.vencedor.nome}`;
+                statusEl.style.color = '#e74c3c';
             } else {
-                if (estadoJogo.vezDoJogadorId === idUsuario) {
-                    statusEl.innerText = `Sua vez! (${estadoJogo.faseTurno})`;
-                    statusEl.style.color = '#2ecc71';
-                } else {
-                    const jVez = estadoJogo.jogadores ? estadoJogo.jogadores.find(j => j.id === estadoJogo.vezDoJogadorId) : null;
-                    statusEl.innerText = `Vez de ${jVez ? jVez.nome : 'Outro Jogador'}...`;
+                painelVencedorEl.style.display = 'none';
+                if (!estadoJogo.emAndamento) {
+                    const qtdPessoas = estadoJogo.jogadores ? estadoJogo.jogadores.length : 0;
+                    statusEl.innerText = `Aguardando jogadores (${qtdPessoas} na sala)...`;
                     statusEl.style.color = '#f1c40f';
+                } else {
+                    if (estadoJogo.vezDoJogadorId === idUsuario) {
+                        statusEl.innerText = `Sua vez! (${estadoJogo.faseTurno})`;
+                        statusEl.style.color = '#2ecc71';
+                    } else {
+                        const jVez = estadoJogo.jogadores ? estadoJogo.jogadores.find(j => j.id === estadoJogo.vezDoJogadorId) : null;
+                        statusEl.innerText = `Vez de ${jVez ? jVez.nome : 'Outro Jogador'}...`;
+                        statusEl.style.color = '#f1c40f';
+                    }
                 }
             }
 
@@ -269,11 +285,6 @@
                         renderizarMaoLocal();
                     }
                 }
-            }
-
-            // Exibir vencedor se houver
-            if (estadoJogo.vencedor && estadoJogo.vencedor.nome) {
-                console.log("Vencedor da última rodada:", estadoJogo.vencedor);
             }
         }
 
@@ -519,7 +530,6 @@
 
             try {
                 await baterJogo(gruposMarcados, ordemLocalMao);
-                alert(`🏆 PARABÉNS ${nomeSalvo.toUpperCase()}! VOCÊ BATEU O JOGO E VENCEU A PARTIDA! 🏆`);
             } catch (err) {
                 console.error("Erro ao registrar vitória:", err);
                 alert(err.message || "Erro ao tentar bater. Tente novamente.");
